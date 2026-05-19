@@ -48,8 +48,9 @@ const aboutContent: Record<Locale, AboutContent> = {
     projectHighlights: [
       "Next.js-basierte Referenzanwendung mit App Router und TypeScript",
       "Zwei unterschiedliche Datendomänen: Krypto-Märkte und Schweizer Wetterdaten",
-      "Fokus auf saubere UI-Architektur, typisierte API-Integration und wartbare Komponenten",
-      "Responsives Interface mit Theme-Support, Testing und Vercel Deployment",
+      "Interaktive Krypto-Detailseiten mit Area-, Line- und echtem OHLC-Candlestick-Chart",
+      "Schweizer Wetterdashboard mit 7-Tage-Forecast, Tageskarten, Temperatur-, Niederschlags- und Windvisualisierung",
+      "Responsives Interface mit Theme-Support, i18n, Testing und Vercel Deployment",
     ],
     capabilityAreas: [
       {
@@ -77,7 +78,7 @@ const aboutContent: Record<Locale, AboutContent> = {
       { category: "Framework", items: ["Next.js 16", "App Router", "Turbopack"] },
       { category: "Sprache", items: ["TypeScript", "Strict Mode"] },
       { category: "Styling", items: ["Tailwind CSS", "shadcn/ui-style Components"] },
-      { category: "Charts", items: ["Recharts"] },
+      { category: "Charts", items: ["Recharts", "lightweight-charts"] },
       { category: "Tabellen", items: ["TanStack Table v8"] },
       {
         category: "Testing",
@@ -119,10 +120,10 @@ const aboutContent: Record<Locale, AboutContent> = {
       dataSources: "Datenquellen",
       coinGeckoTitle: "CoinGecko API",
       coinGeckoText:
-        "Nutzung für aktuelle Kryptomarktdaten, Rankings, Preisentwicklungen, Marktkapitalisierung und historische Chartdaten. Im Dashboard werden diese Daten in Tabellen, Kennzahlen und Detailansichten übersetzt.",
+        "Nutzung für aktuelle Kryptomarktdaten, Rankings, Preisentwicklungen, Marktkapitalisierung, historische Zeitreihen und echte OHLC-Daten. Im Dashboard werden diese Daten in Tabellen, Kennzahlen, Detailansichten und interaktive Chart-Modi übersetzt.",
       openMeteoTitle: "Open-Meteo API",
       openMeteoText:
-        "Nutzung für Schweizer Wetter- und Prognosedaten mit Fokus auf Temperatur, Niederschlag und Wind. Diese Daten werden als Zeitreihen und visuelle Muster aufbereitet, um neben Tabellen auch chartbasierte Informationsdarstellung abzudecken.",
+        "Nutzung für Schweizer Wetter- und Prognosedaten mit Fokus auf Temperatur, Niederschlag, Wind und Wetterzustände. Diese Daten werden als Tagesübersicht, Forecast-Karten und Zeitreihenvisualisierungen aufbereitet.",
       authorTitle: "Autor & öffentliche Einordnung",
       authorText:
         "Demian Lienert positioniert sich öffentlich an der Schnittstelle von moderner Webentwicklung, AI-Workflows, visuellen Systemen und plattformorientiertem technischem Denken. Dieses Dashboard dient als nachvollziehbarer Praxisnachweis innerhalb dieses Profils.",
@@ -134,8 +135,9 @@ const aboutContent: Record<Locale, AboutContent> = {
     projectHighlights: [
       "Next.js-based reference application using the App Router and TypeScript",
       "Two distinct data domains: crypto markets and Swiss weather data",
-      "Focused on clean UI architecture, typed API integration and maintainable components",
-      "Responsive interface with theme support, testing and Vercel deployment",
+      "Interactive crypto detail pages with area, line and real OHLC candlestick charts",
+      "Swiss weather dashboard with 7-day forecasts, daily cards, temperature, precipitation and wind visualizations",
+      "Responsive interface with theme support, i18n, testing and Vercel deployment",
     ],
     capabilityAreas: [
       {
@@ -163,7 +165,7 @@ const aboutContent: Record<Locale, AboutContent> = {
       { category: "Framework", items: ["Next.js 16", "App Router", "Turbopack"] },
       { category: "Language", items: ["TypeScript", "Strict Mode"] },
       { category: "Styling", items: ["Tailwind CSS", "shadcn/ui-style components"] },
-      { category: "Charts", items: ["Recharts"] },
+      { category: "Charts", items: ["Recharts", "lightweight-charts"] },
       { category: "Tables", items: ["TanStack Table v8"] },
       {
         category: "Testing",
@@ -205,10 +207,10 @@ const aboutContent: Record<Locale, AboutContent> = {
       dataSources: "Data Sources",
       coinGeckoTitle: "CoinGecko API",
       coinGeckoText:
-        "Used for live crypto market data, rankings, price performance, market capitalization and historical chart data. Within the dashboard, the data is translated into tables, metrics and detail views.",
+        "Used for live crypto market data, rankings, price performance, market capitalization, historical time series and real OHLC data. Within the dashboard, the data is translated into tables, metrics, detail views and interactive chart modes.",
       openMeteoTitle: "Open-Meteo API",
       openMeteoText:
-        "Used for Swiss weather and forecast data with focus on temperature, precipitation and wind. The data is prepared as time-series and visual patterns to cover chart-based information delivery in addition to tables.",
+        "Used for Swiss weather and forecast data with focus on temperature, precipitation, wind and weather conditions. The data is prepared as daily summaries, forecast cards and time-series visualizations.",
       authorTitle: "Author & Public Positioning",
       authorText:
         "Demian Lienert publicly positions himself at the intersection of modern web development, AI workflows, visual systems and platform-oriented technical thinking. This dashboard serves as a practical proof point within that profile.",
@@ -359,7 +361,8 @@ export default async function AboutPage() {
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               <code>/coins/markets</code>, <code>/coins/{"{id}"}</code>,{" "}
-              <code>/coins/{"{id}"}/market_chart</code>, <code>/global</code>
+              <code>/coins/{"{id}"}/market_chart</code>,{" "}
+              <code>/coins/{"{id}"}/ohlc</code>, <code>/global</code>
             </p>
           </div>
 
