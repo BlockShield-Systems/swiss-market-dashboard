@@ -301,7 +301,7 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
         />
       </div>
 
-      <CoinPriceChart data={chartData} />
+      <CoinPriceChart coinId={coin.id} initialData={chartData} initialDays={7} />
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <Card>

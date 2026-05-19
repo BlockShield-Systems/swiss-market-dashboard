@@ -100,6 +100,11 @@ export type Dictionary = {
       website: string;
       explorer: string;
       openDetails: string;
+      chartRange7d: string;
+      chartRange30d: string;
+      chartRange90d: string;
+      chartLoading: string;
+      chartLoadError: string;
     };
   };
   weather: {
@@ -252,7 +257,7 @@ const dictionaries: Record<Locale, Dictionary> = {
         loadError: "Coin-Details konnten nicht geladen werden.",
         detailDescription:
           "Detailansicht mit Marktkennzahlen, Preisverlauf und CoinGecko-Metadaten.",
-        priceChartTitle: "Preisverlauf 7 Tage",
+        priceChartTitle: "Preisverlauf",
         price: "Preis",
         date: "Datum",
         rank: "Rang",
@@ -270,6 +275,11 @@ const dictionaries: Record<Locale, Dictionary> = {
         website: "Website",
         explorer: "Blockchain Explorer",
         openDetails: "Details zu {coin} öffnen",
+        chartRange7d: "7 Tage",
+        chartRange30d: "30 Tage",
+        chartRange90d: "90 Tage",
+        chartLoading: "Chartdaten werden geladen …",
+        chartLoadError: "Chartdaten konnten nicht geladen werden.",
       },
     },
     weather: {
@@ -462,7 +472,7 @@ const dictionaries: Record<Locale, Dictionary> = {
         loadError: "Coin details could not be loaded.",
         detailDescription:
           "Detail view with market metrics, price chart and CoinGecko metadata.",
-        priceChartTitle: "7-Day Price Chart",
+        priceChartTitle: "Price Chart",
         price: "Price",
         date: "Date",
         rank: "Rank",
@@ -480,6 +490,11 @@ const dictionaries: Record<Locale, Dictionary> = {
         website: "Website",
         explorer: "Blockchain Explorer",
         openDetails: "Open details for {coin}",
+        chartRange7d: "7 days",
+        chartRange30d: "30 days",
+        chartRange90d: "90 days",
+        chartLoading: "Loading chart data …",
+        chartLoadError: "Chart data could not be loaded.",
       },
     },
     weather: {

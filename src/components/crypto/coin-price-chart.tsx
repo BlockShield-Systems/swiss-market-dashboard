@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState, useTransition } from "react";
 import {
   Area,
   AreaChart,
@@ -10,13 +11,25 @@ import {
   YAxis,
 } from "recharts";
 import { usePreferences } from "@/components/preferences-provider";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDictionary, type Locale } from "@/lib/i18n";
-import type { CryptoMarketChartPoint } from "@/lib/types/crypto";
+import type {
+  CryptoChartDays,
+  CryptoMarketChartPoint,
+} from "@/lib/types/crypto";
 
 interface CoinPriceChartProps {
-  data: CryptoMarketChartPoint[];
+  coinId: string;
+  initialData: CryptoMarketChartPoint[];
+  initialDays?: CryptoChartDays;
 }
+
+type ChartDataPoint = CryptoMarketChartPoint & {
+  label: string;
+};
+
+const CHART_RANGES: CryptoChartDays[] = [7, 30, 90];
 
 function getLocaleCode(locale: Locale): "de-CH" | "en-CH" {
   return locale === "de" ? "de-CH" : "en-CH";
@@ -38,29 +51,124 @@ function formatAxisPrice(value: number, locale: Locale): string {
   }).format(value);
 }
 
-export function CoinPriceChart({ data }: CoinPriceChartProps) {
+function formatDateLabel(timestamp: number, locale: Locale): string {
+  return new Date(timestamp).toLocaleDateString(getLocaleCode(locale), {
+    day: "2-digit",
+    month: "2-digit",
+  });
+}
+
+function getRangeLabel(days: CryptoChartDays, t: ReturnType<typeof getDictionary>) {
+  if (days === 7) {
+    return t.crypto.detail.chartRange7d;
+  }
+
+  if (days === 30) {
+    return t.crypto.detail.chartRange30d;
+  }
+
+  return t.crypto.detail.chartRange90d;
+}
+
+export function CoinPriceChart({
+  coinId,
+  initialData,
+  initialDays = 7,
+}: CoinPriceChartProps) {
   const { locale } = usePreferences();
   const t = getDictionary(locale);
 
-  const chartData = data.map((point) => ({
-    ...point,
-    label: new Date(point.timestamp).toLocaleDateString(getLocaleCode(locale), {
-      day: "2-digit",
-      month: "2-digit",
-    }),
-  }));
+  const [selectedDays, setSelectedDays] =
+    useState<CryptoChartDays>(initialDays);
+  const [data, setData] = useState<CryptoMarketChartPoint[]>(initialData);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const chartData = useMemo<ChartDataPoint[]>(
+    () =>
+      data.map((point) => ({
+        ...point,
+        label: formatDateLabel(point.timestamp, locale),
+      })),
+    [data, locale],
+  );
+
+  function handleRangeChange(days: CryptoChartDays) {
+    if (days === selectedDays || isPending) {
+      return;
+    }
+
+    setError(null);
+    setSelectedDays(days);
+
+    startTransition(async () => {
+      try {
+        const response = await fetch(
+          `/api/crypto/${encodeURIComponent(coinId)}/market-chart?days=${days}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`Market chart request failed: ${response.status}`);
+        }
+
+        const nextData = (await response.json()) as CryptoMarketChartPoint[];
+
+        setData(nextData);
+      } catch (fetchError) {
+        console.error("Failed to fetch market chart range:", fetchError);
+        setError(t.crypto.detail.chartLoadError);
+      }
+    });
+  }
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>{t.crypto.detail.priceChartTitle}</CardTitle>
+
+        <div className="flex flex-wrap gap-2">
+          {CHART_RANGES.map((days) => (
+            <Button
+              key={days}
+              type="button"
+              size="sm"
+              variant={selectedDays === days ? "default" : "outline"}
+              disabled={isPending}
+              onClick={() => handleRangeChange(days)}
+            >
+              {getRangeLabel(days, t)}
+            </Button>
+          ))}
+        </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="space-y-3">
+        {error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : null}
+
+        {isPending ? (
+          <p className="text-sm text-muted-foreground">
+            {t.crypto.detail.chartLoading}
+          </p>
+        ) : null}
+
         <ResponsiveContainer width="100%" height={320}>
           <AreaChart data={chartData}>
             <defs>
-              <linearGradient id="coinPriceGradient" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient
+                id="coinPriceGradient"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
