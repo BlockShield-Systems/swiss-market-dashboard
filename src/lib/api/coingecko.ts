@@ -29,15 +29,33 @@ function toCoinGeckoOrder(
   sortField: SortField,
   sortDirection: SortDirection,
 ): string {
-  if (sortField === "market_cap_rank" || sortField === "market_cap") {
-    return sortDirection === "asc" ? "market_cap_asc" : "market_cap_desc";
-  }
+  switch (sortField) {
+    case "market_cap_rank":
+      /**
+       * UI rank ascending means #1, #2, #3...
+       * CoinGecko represents this as highest market cap first.
+       */
+      return sortDirection === "asc" ? "market_cap_desc" : "market_cap_asc";
 
-  if (sortField === "total_volume") {
-    return sortDirection === "asc" ? "volume_asc" : "volume_desc";
-  }
+    case "market_cap":
+      return sortDirection === "asc" ? "market_cap_asc" : "market_cap_desc";
 
-  return "market_cap_desc";
+    case "total_volume":
+      return sortDirection === "asc" ? "volume_asc" : "volume_desc";
+
+    /**
+     * CoinGecko /coins/markets does not provide reliable server-side ordering
+     * for all table columns. Keep the server request stable by market cap.
+     * Client-side sorting is handled by TanStack Table.
+     */
+    case "current_price":
+    case "price_change_percentage_24h":
+    case "price_change_percentage_7d_in_currency":
+      return "market_cap_desc";
+
+    default:
+      return "market_cap_desc";
+  }
 }
 
 function normalizeMarketCoin(coin: CoinGeckoMarketCoin): CryptoCoin {
@@ -115,12 +133,15 @@ export async function fetchCoinDetails(
     sparkline: "false",
   });
 
-  const res = await fetch(`${BASE_URL}/coins/${id}?${searchParams}`, {
-    headers: getHeaders(),
-    next: {
-      revalidate: 120,
+  const res = await fetch(
+    `${BASE_URL}/coins/${encodeURIComponent(id)}?${searchParams}`,
+    {
+      headers: getHeaders(),
+      next: {
+        revalidate: 120,
+      },
     },
-  });
+  );
 
   if (!res.ok) {
     throw new Error(`CoinGecko /coins/${id} error: ${res.status}`);
@@ -138,12 +159,15 @@ export async function fetchCoinMarketChart(
     days: String(days),
   });
 
-  const res = await fetch(`${BASE_URL}/coins/${id}/market_chart?${searchParams}`, {
-    headers: getHeaders(),
-    next: {
-      revalidate: 120,
+  const res = await fetch(
+    `${BASE_URL}/coins/${encodeURIComponent(id)}/market_chart?${searchParams}`,
+    {
+      headers: getHeaders(),
+      next: {
+        revalidate: 120,
+      },
     },
-  });
+  );
 
   if (!res.ok) {
     throw new Error(`CoinGecko /coins/${id}/market_chart error: ${res.status}`);
