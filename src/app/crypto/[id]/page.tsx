@@ -89,10 +89,13 @@ function stripHtml(value: string | undefined): string {
 }
 
 function getDescription(coin: CryptoCoinDetails, locale: Locale): string {
-  const localizedDescription =
-    locale === "de" ? coin.description.de : coin.description.en;
+  const preferredDescription =
+    locale === "de" ? coin.description?.de : coin.description?.en;
 
-  return stripHtml(localizedDescription || coin.description.en);
+  const fallbackDescription =
+    locale === "de" ? coin.description?.en : coin.description?.de;
+
+  return stripHtml(preferredDescription || fallbackDescription || "");
 }
 
 function getPrimaryHomepage(coin: CryptoCoinDetails): string | null {

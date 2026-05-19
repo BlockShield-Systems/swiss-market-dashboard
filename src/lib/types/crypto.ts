@@ -29,9 +29,10 @@ export interface CryptoCoinDetails {
   id: string;
   symbol: string;
   name: string;
-  description: {
+  description?: {
     en?: string;
     de?: string;
+    [locale: string]: string | undefined;
   };
   image: {
     thumb?: string;
