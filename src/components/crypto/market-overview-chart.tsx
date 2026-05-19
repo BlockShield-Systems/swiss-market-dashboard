@@ -81,7 +81,7 @@ export function MarketOverviewChart() {
           <CardTitle>{t.crypto.marketShareTitle}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-75 w-full" />
         </CardContent>
       </Card>
     );
