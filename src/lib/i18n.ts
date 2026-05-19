@@ -77,6 +77,30 @@ export type Dictionary = {
       gainers7d: string;
       losers7d: string;
     };
+    detail: {
+      backToMarket: string;
+      notFoundTitle: string;
+      loadError: string;
+      detailDescription: string;
+      priceChartTitle: string;
+      price: string;
+      date: string;
+      rank: string;
+      marketCap: string;
+      volume: string;
+      ath: string;
+      atl: string;
+      aboutCoin: string;
+      noDescription: string;
+      marketData: string;
+      circulatingSupply: string;
+      totalSupply: string;
+      maxSupply: string;
+      categories: string;
+      website: string;
+      explorer: string;
+      openDetails: string;
+    };
   };
   weather: {
     title: string;
@@ -221,6 +245,31 @@ const dictionaries: Record<Locale, Dictionary> = {
         losers24h: "Verlierer 24h",
         gainers7d: "Gewinner 7d",
         losers7d: "Verlierer 7d",
+      },
+      detail: {
+        backToMarket: "Zurück zum Krypto-Markt",
+        notFoundTitle: "Coin nicht gefunden",
+        loadError: "Coin-Details konnten nicht geladen werden.",
+        detailDescription:
+          "Detailansicht mit Marktkennzahlen, Preisverlauf und CoinGecko-Metadaten.",
+        priceChartTitle: "Preisverlauf 7 Tage",
+        price: "Preis",
+        date: "Datum",
+        rank: "Rang",
+        marketCap: "Market Cap",
+        volume: "Volumen",
+        ath: "Allzeithoch",
+        atl: "Allzeittief",
+        aboutCoin: "Über diesen Coin",
+        noDescription: "Für diesen Coin ist keine Beschreibung verfügbar.",
+        marketData: "Marktdaten",
+        circulatingSupply: "Umlaufversorgung",
+        totalSupply: "Gesamtversorgung",
+        maxSupply: "Maximale Versorgung",
+        categories: "Kategorien",
+        website: "Website",
+        explorer: "Blockchain Explorer",
+        openDetails: "Details zu {coin} öffnen",
       },
     },
     weather: {
@@ -406,6 +455,31 @@ const dictionaries: Record<Locale, Dictionary> = {
         losers24h: "Losers 24h",
         gainers7d: "Gainers 7d",
         losers7d: "Losers 7d",
+      },
+      detail: {
+        backToMarket: "Back to crypto market",
+        notFoundTitle: "Coin not found",
+        loadError: "Coin details could not be loaded.",
+        detailDescription:
+          "Detail view with market metrics, price chart and CoinGecko metadata.",
+        priceChartTitle: "7-Day Price Chart",
+        price: "Price",
+        date: "Date",
+        rank: "Rank",
+        marketCap: "Market Cap",
+        volume: "Volume",
+        ath: "All-time high",
+        atl: "All-time low",
+        aboutCoin: "About this coin",
+        noDescription: "No description is available for this coin.",
+        marketData: "Market Data",
+        circulatingSupply: "Circulating Supply",
+        totalSupply: "Total Supply",
+        maxSupply: "Max Supply",
+        categories: "Categories",
+        website: "Website",
+        explorer: "Blockchain Explorer",
+        openDetails: "Open details for {coin}",
       },
     },
     weather: {

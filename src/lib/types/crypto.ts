@@ -25,6 +25,55 @@ export interface CryptoCoin {
   };
 }
 
+export interface CryptoCoinDetails {
+  id: string;
+  symbol: string;
+  name: string;
+  description: {
+    en?: string;
+    de?: string;
+  };
+  image: {
+    thumb?: string;
+    small?: string;
+    large?: string;
+  };
+  links: {
+    homepage?: string[];
+    blockchain_site?: string[];
+  };
+  categories?: string[];
+  market_cap_rank: number | null;
+  market_data: {
+    current_price: Record<string, number | undefined>;
+    market_cap: Record<string, number | undefined>;
+    total_volume: Record<string, number | undefined>;
+    price_change_percentage_24h: number | null;
+    price_change_percentage_7d: number | null;
+    circulating_supply: number | null;
+    total_supply: number | null;
+    max_supply: number | null;
+    ath: Record<string, number | undefined>;
+    atl: Record<string, number | undefined>;
+  };
+}
+
+export interface CryptoMarketChartResponse {
+  prices: [number, number][];
+  market_caps: [number, number][];
+  total_volumes: [number, number][];
+}
+
+export interface CryptoMarketChartPoint {
+  timestamp: number;
+  date: string;
+  price: number;
+  marketCap: number | null;
+  volume: number | null;
+}
+
+export type CryptoChartDays = 7 | 30 | 90;
+
 export type SortField =
   | "market_cap_rank"
   | "current_price"

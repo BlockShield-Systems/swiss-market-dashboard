@@ -82,6 +82,20 @@ describe("CryptoTable", () => {
     expect(screen.getByText("ETH")).toBeInTheDocument();
   });
 
+  it("links coin names to their detail pages", () => {
+    render(<CryptoTable data={mockCoins} />);
+
+    expect(screen.getByRole("link", { name: /bitcoin/i })).toHaveAttribute(
+      "href",
+      "/crypto/bitcoin",
+    );
+
+    expect(screen.getByRole("link", { name: /ethereum/i })).toHaveAttribute(
+      "href",
+      "/crypto/ethereum",
+    );
+  });
+
   it("shows positive 24h change", () => {
     render(<CryptoTable data={mockCoins} />);
 

@@ -1,4 +1,12 @@
-import type { CryptoCoin, SortDirection, SortField } from "@/lib/types/crypto";
+import type {
+  CryptoChartDays,
+  CryptoCoin,
+  CryptoCoinDetails,
+  CryptoMarketChartPoint,
+  CryptoMarketChartResponse,
+  SortDirection,
+  SortField,
+} from "@/lib/types/crypto";
 
 const BASE_URL = "https://api.coingecko.com/api/v3";
 const API_KEY = process.env.COINGECKO_API_KEY ?? "";
@@ -51,6 +59,18 @@ function normalizeMarketCoin(coin: CoinGeckoMarketCoin): CryptoCoin {
   };
 }
 
+function normalizeChartData(
+  data: CryptoMarketChartResponse,
+): CryptoMarketChartPoint[] {
+  return data.prices.map(([timestamp, price], index) => ({
+    timestamp,
+    date: new Date(timestamp).toISOString(),
+    price,
+    marketCap: data.market_caps[index]?.[1] ?? null,
+    volume: data.total_volumes[index]?.[1] ?? null,
+  }));
+}
+
 export async function fetchCryptoMarket(
   page: number = 1,
   perPage: number = 50,
@@ -81,6 +101,57 @@ export async function fetchCryptoMarket(
   const coins = (await res.json()) as CoinGeckoMarketCoin[];
 
   return coins.map(normalizeMarketCoin);
+}
+
+export async function fetchCoinDetails(
+  id: string,
+): Promise<CryptoCoinDetails> {
+  const searchParams = new URLSearchParams({
+    localization: "true",
+    tickers: "false",
+    market_data: "true",
+    community_data: "false",
+    developer_data: "false",
+    sparkline: "false",
+  });
+
+  const res = await fetch(`${BASE_URL}/coins/${id}?${searchParams}`, {
+    headers: getHeaders(),
+    next: {
+      revalidate: 120,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`CoinGecko /coins/${id} error: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function fetchCoinMarketChart(
+  id: string,
+  days: CryptoChartDays = 7,
+): Promise<CryptoMarketChartPoint[]> {
+  const searchParams = new URLSearchParams({
+    vs_currency: "chf",
+    days: String(days),
+  });
+
+  const res = await fetch(`${BASE_URL}/coins/${id}/market_chart?${searchParams}`, {
+    headers: getHeaders(),
+    next: {
+      revalidate: 120,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`CoinGecko /coins/${id}/market_chart error: ${res.status}`);
+  }
+
+  const data = (await res.json()) as CryptoMarketChartResponse;
+
+  return normalizeChartData(data);
 }
 
 export async function fetchCryptoGlobalData(): Promise<{

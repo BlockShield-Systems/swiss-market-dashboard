@@ -3,6 +3,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   type ColumnDef,
   type SortingState,
@@ -116,10 +117,13 @@ function formatPercent(value: number | null, locale: Locale): string {
     return "–";
   }
 
-  return `${value >= 0 ? "+" : ""}${new Intl.NumberFormat(getLocaleCode(locale), {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)}%`;
+  return `${value >= 0 ? "+" : ""}${new Intl.NumberFormat(
+    getLocaleCode(locale),
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    },
+  ).format(value)}%`;
 }
 
 function getChange7d(coin: CryptoCoin): number | null {
@@ -204,6 +208,12 @@ export function CryptoTable({ data }: CryptoTableProps) {
   const { locale } = usePreferences();
   const t = getDictionary(locale);
 
+  const cryptoTable = t.crypto.table;
+  const cryptoFilters = t.crypto.filters;
+  const searchPlaceholder = t.crypto.searchPlaceholder;
+  const noResults = t.crypto.noResults;
+  const openDetailsLabel = t.crypto.detail.openDetails;
+
   const [sorting, setSorting] = useState<SortingState>([
     {
       id: "market_cap_rank",
@@ -236,7 +246,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
             className="inline-flex items-center gap-1"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {t.crypto.table.rank}
+            {cryptoTable.rank}
             <ArrowUpDown className="size-3" />
           </button>
         ),
@@ -259,12 +269,16 @@ export function CryptoTable({ data }: CryptoTableProps) {
             className="inline-flex items-center gap-1"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {t.crypto.table.coin}
+            {cryptoTable.coin}
             <ArrowUpDown className="size-3" />
           </button>
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-3">
+          <Link
+            href={`/crypto/${row.original.id}`}
+            className="flex w-fit items-center gap-3 rounded-md outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={openDetailsLabel.replace("{coin}", row.original.name)}
+          >
             <Image
               src={row.original.image}
               alt={row.original.name}
@@ -278,7 +292,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
                 {row.original.symbol.toUpperCase()}
               </span>
             </div>
-          </div>
+          </Link>
         ),
         size: 220,
       },
@@ -290,7 +304,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
             className="inline-flex items-center gap-1"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {t.crypto.table.price}
+            {cryptoTable.price}
             <ArrowUpDown className="size-3" />
           </button>
         ),
@@ -309,7 +323,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
             className="inline-flex items-center gap-1"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {t.crypto.table.change24h}
+            {cryptoTable.change24h}
             <ArrowUpDown className="size-3" />
           </button>
         ),
@@ -327,7 +341,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
             className="inline-flex items-center gap-1"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {t.crypto.table.change7d}
+            {cryptoTable.change7d}
             <ArrowUpDown className="size-3" />
           </button>
         ),
@@ -344,7 +358,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
             className="inline-flex items-center gap-1"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {t.crypto.table.marketCap}
+            {cryptoTable.marketCap}
             <ArrowUpDown className="size-3" />
           </button>
         ),
@@ -363,7 +377,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
             className="inline-flex items-center gap-1"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {t.crypto.table.volume}
+            {cryptoTable.volume}
             <ArrowUpDown className="size-3" />
           </button>
         ),
@@ -375,7 +389,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
         size: 150,
       },
     ],
-    [locale, t.crypto.table],
+    [cryptoTable, locale, openDetailsLabel],
   );
 
   // TanStack Table v8 ist aktuell als React-Compiler-inkompatibel markiert.
@@ -398,7 +412,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
         <div className="relative w-full sm:max-w-sm">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder={t.crypto.searchPlaceholder}
+            placeholder={searchPlaceholder}
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             className="pl-9"
@@ -410,21 +424,21 @@ export function CryptoTable({ data }: CryptoTableProps) {
           onValueChange={(value) => setMarketFilter(value as MarketFilter)}
         >
           <SelectTrigger className="w-full sm:w-56">
-            <SelectValue placeholder={t.crypto.filters.all} />
+            <SelectValue placeholder={cryptoFilters.all} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t.crypto.filters.all}</SelectItem>
+            <SelectItem value="all">{cryptoFilters.all}</SelectItem>
             <SelectItem value="gainers24h">
-              {t.crypto.filters.gainers24h}
+              {cryptoFilters.gainers24h}
             </SelectItem>
             <SelectItem value="losers24h">
-              {t.crypto.filters.losers24h}
+              {cryptoFilters.losers24h}
             </SelectItem>
             <SelectItem value="gainers7d">
-              {t.crypto.filters.gainers7d}
+              {cryptoFilters.gainers7d}
             </SelectItem>
             <SelectItem value="losers7d">
-              {t.crypto.filters.losers7d}
+              {cryptoFilters.losers7d}
             </SelectItem>
           </SelectContent>
         </Select>
@@ -462,7 +476,7 @@ export function CryptoTable({ data }: CryptoTableProps) {
                   colSpan={columns.length}
                   className="h-24 text-center text-sm text-muted-foreground"
                 >
-                  {t.crypto.noResults}
+                  {noResults}
                 </TableCell>
               </TableRow>
             ) : (
