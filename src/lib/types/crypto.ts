@@ -73,6 +73,19 @@ export interface CryptoMarketChartPoint {
   volume: number | null;
 }
 
+export interface CryptoOhlcPoint {
+  timestamp: number;
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
+export type CryptoOhlcResponse = [number, number, number, number, number][];
+
+export type CryptoChartMode = "area" | "line" | "candlestick";
+
 export type CryptoChartDays = 7 | 30 | 90;
 
 export type SortField =

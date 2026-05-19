@@ -112,6 +112,15 @@ export type Dictionary = {
       chartTimeframe: string;
       chartZoomHint: string;
       chartBrushHint: string;
+      chartMode: string;
+      chartModeArea: string;
+      chartModeLine: string;
+      chartModeCandlestick: string;
+      chartCandlestickDescription: string;
+      chartCandlestickHint: string;
+      chartOhlcLoading: string;
+      chartOhlcLoadError: string;
+      chartOhlcNoData: string;
     };
     legend: {
       title: string;
@@ -311,6 +320,17 @@ const dictionaries: Record<Locale, Dictionary> = {
         chartTimeframe: "Zeitraum",
         chartZoomHint: "Zoom / Scroll",
         chartBrushHint: "Den unteren Schieberegler ziehen, um den sichtbaren Zeitraum einzugrenzen.",
+        chartMode: "Chart-Typ",
+        chartModeArea: "Fläche",
+        chartModeLine: "Linie",
+        chartModeCandlestick: "Candlestick",
+        chartCandlestickDescription:
+          "Echter OHLC-Candlestick-Chart mit Open-, High-, Low- und Close-Werten in CHF.",
+        chartCandlestickHint:
+          "Candlestick-Chart mit Maus ziehen, Mausrad zoomen oder Touch-Gesten bedienen. Charts bereitgestellt durch",
+        chartOhlcLoading: "OHLC-Daten werden geladen …",
+        chartOhlcLoadError: "OHLC-Daten konnten nicht geladen werden.",
+        chartOhlcNoData: "Keine OHLC-Daten für diesen Zeitraum verfügbar.",
       },
       legend: {
         title: "Legende",
@@ -561,6 +581,17 @@ const dictionaries: Record<Locale, Dictionary> = {
         chartTimeframe: "Timeframe",
         chartZoomHint: "Zoom / scroll",
         chartBrushHint: "Drag the lower range slider to narrow the visible timeframe.",
+        chartMode: "Chart type",
+        chartModeArea: "Area",
+        chartModeLine: "Line",
+        chartModeCandlestick: "Candlestick",
+        chartCandlestickDescription:
+          "Real OHLC candlestick chart with open, high, low and close values in CHF.",
+        chartCandlestickHint:
+          "Drag the candlestick chart, zoom with the mouse wheel or use touch gestures. Charts provided by",
+        chartOhlcLoading: "Loading OHLC data …",
+        chartOhlcLoadError: "OHLC data could not be loaded.",
+        chartOhlcNoData: "No OHLC data available for this timeframe.",
       },
       legend: {
         title: "Legend",

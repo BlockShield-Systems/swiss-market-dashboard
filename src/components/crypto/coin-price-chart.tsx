@@ -6,17 +6,21 @@ import {
   AreaChart,
   Brush,
   CartesianGrid,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { CoinCandlestickChart } from "@/components/crypto/coin-candlestick-chart";
 import { usePreferences } from "@/components/preferences-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import type {
   CryptoChartDays,
+  CryptoChartMode,
   CryptoMarketChartPoint,
 } from "@/lib/types/crypto";
 
@@ -32,6 +36,7 @@ type ChartDataPoint = CryptoMarketChartPoint & {
 };
 
 const CHART_RANGES: CryptoChartDays[] = [7, 30, 90];
+const CHART_MODES: CryptoChartMode[] = ["area", "line", "candlestick"];
 
 function getLocaleCode(locale: Locale): "de-CH" | "en-CH" {
   return locale === "de" ? "de-CH" : "en-CH";
@@ -85,6 +90,21 @@ function getRangeLabel(
   return t.crypto.detail.chartRange90d;
 }
 
+function getChartModeLabel(
+  mode: CryptoChartMode,
+  t: ReturnType<typeof getDictionary>,
+): string {
+  if (mode === "area") {
+    return t.crypto.detail.chartModeArea;
+  }
+
+  if (mode === "line") {
+    return t.crypto.detail.chartModeLine;
+  }
+
+  return t.crypto.detail.chartModeCandlestick;
+}
+
 export function CoinPriceChart({
   coinId,
   initialData,
@@ -95,6 +115,8 @@ export function CoinPriceChart({
 
   const [selectedDays, setSelectedDays] =
     useState<CryptoChartDays>(initialDays);
+  const [selectedChartMode, setSelectedChartMode] =
+    useState<CryptoChartMode>("area");
   const [data, setData] = useState<CryptoMarketChartPoint[]>(initialData);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -143,38 +165,89 @@ export function CoinPriceChart({
     });
   }
 
+  const commonAxis = (
+    <>
+      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+
+      <XAxis dataKey="label" tick={{ fontSize: 12 }} minTickGap={24} />
+
+      <YAxis
+        tick={{ fontSize: 12 }}
+        tickFormatter={(value) => formatAxisPrice(Number(value), locale)}
+        width={72}
+        domain={["dataMin", "dataMax"]}
+      />
+
+      <Tooltip
+        formatter={(value) => [
+          formatPrice(Number(value), locale),
+          t.crypto.detail.price,
+        ]}
+        labelFormatter={(_, payload) => {
+          const point = payload?.[0]?.payload as ChartDataPoint | undefined;
+
+          return point ? `${t.crypto.detail.date}: ${point.tooltipLabel}` : "";
+        }}
+        contentStyle={{
+          backgroundColor: "hsl(var(--card))",
+          border: "1px solid hsl(var(--border))",
+          borderRadius: "8px",
+          fontSize: "12px",
+        }}
+      />
+    </>
+  );
+
   return (
     <Card>
-      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <CardTitle>{t.crypto.detail.priceChartTitle}</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t.crypto.detail.chartPriceInChf}
-          </p>
+      <CardHeader className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle>{t.crypto.detail.priceChartTitle}</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {selectedChartMode === "candlestick"
+                ? t.crypto.detail.chartCandlestickDescription
+                : t.crypto.detail.chartPriceInChf}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {CHART_RANGES.map((days) => (
+              <Button
+                key={days}
+                type="button"
+                size="sm"
+                variant={selectedDays === days ? "default" : "outline"}
+                disabled={isPending}
+                onClick={() => handleRangeChange(days)}
+              >
+                {getRangeLabel(days, t)}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {CHART_RANGES.map((days) => (
+          {CHART_MODES.map((mode) => (
             <Button
-              key={days}
+              key={mode}
               type="button"
               size="sm"
-              variant={selectedDays === days ? "default" : "outline"}
-              disabled={isPending}
-              onClick={() => handleRangeChange(days)}
+              variant={selectedChartMode === mode ? "default" : "outline"}
+              onClick={() => setSelectedChartMode(mode)}
             >
-              {getRangeLabel(days, t)}
+              {getChartModeLabel(mode, t)}
             </Button>
           ))}
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {error ? (
+        {error && selectedChartMode !== "candlestick" ? (
           <p className="text-sm text-destructive">{error}</p>
         ) : null}
 
-        {isPending ? (
+        {isPending && selectedChartMode !== "candlestick" ? (
           <p className="text-sm text-muted-foreground">
             {t.crypto.detail.chartLoading}
           </p>
@@ -197,93 +270,101 @@ export function CoinPriceChart({
 
           <div>
             <p className="font-medium text-foreground">
-              {t.crypto.detail.chartZoomHint}
+              {t.crypto.detail.chartMode}
             </p>
-            <p>{t.crypto.detail.chartBrushHint}</p>
+            <p>{getChartModeLabel(selectedChartMode, t)}</p>
           </div>
         </div>
 
-        <ResponsiveContainer width="100%" height={380}>
-          <AreaChart
-            data={chartData}
-            margin={{
-              top: 10,
-              right: 12,
-              left: 0,
-              bottom: 8,
-            }}
-          >
-            <defs>
-              <linearGradient
-                id="coinPriceGradient"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
+        {selectedChartMode === "candlestick" ? (
+          <CoinCandlestickChart coinId={coinId} days={selectedDays} />
+        ) : (
+          <ResponsiveContainer width="100%" height={380}>
+            {selectedChartMode === "area" ? (
+              <AreaChart
+                data={chartData}
+                margin={{
+                  top: 10,
+                  right: 12,
+                  left: 0,
+                  bottom: 8,
+                }}
               >
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-              </linearGradient>
-            </defs>
+                <defs>
+                  <linearGradient
+                    id="coinPriceGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
 
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                {commonAxis}
 
-            <XAxis
-              dataKey="label"
-              tick={{ fontSize: 12 }}
-              minTickGap={24}
-            />
+                <Area
+                  type="monotone"
+                  dataKey="price"
+                  stroke="#3b82f6"
+                  fill="url(#coinPriceGradient)"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                  name={t.crypto.detail.price}
+                  isAnimationActive={false}
+                />
 
-            <YAxis
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => formatAxisPrice(Number(value), locale)}
-              width={72}
-              domain={["dataMin", "dataMax"]}
-            />
+                <Brush
+                  dataKey="label"
+                  height={28}
+                  stroke="#3b82f6"
+                  travellerWidth={8}
+                  tickFormatter={(value) => String(value)}
+                />
+              </AreaChart>
+            ) : (
+              <LineChart
+                data={chartData}
+                margin={{
+                  top: 10,
+                  right: 12,
+                  left: 0,
+                  bottom: 8,
+                }}
+              >
+                {commonAxis}
 
-            <Tooltip
-              formatter={(value) => [
-                formatPrice(Number(value), locale),
-                t.crypto.detail.price,
-              ]}
-              labelFormatter={(_, payload) => {
-                const point = payload?.[0]?.payload as
-                  | ChartDataPoint
-                  | undefined;
+                <Line
+                  type="monotone"
+                  dataKey="price"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                  name={t.crypto.detail.price}
+                  isAnimationActive={false}
+                />
 
-                return point
-                  ? `${t.crypto.detail.date}: ${point.tooltipLabel}`
-                  : "";
-              }}
-              contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-                fontSize: "12px",
-              }}
-            />
+                <Brush
+                  dataKey="label"
+                  height={28}
+                  stroke="#3b82f6"
+                  travellerWidth={8}
+                  tickFormatter={(value) => String(value)}
+                />
+              </LineChart>
+            )}
+          </ResponsiveContainer>
+        )}
 
-            <Area
-              type="monotone"
-              dataKey="price"
-              stroke="#3b82f6"
-              fill="url(#coinPriceGradient)"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
-              name={t.crypto.detail.price}
-              isAnimationActive={false}
-            />
-
-            <Brush
-              dataKey="label"
-              height={28}
-              stroke="#3b82f6"
-              travellerWidth={8}
-              tickFormatter={(value) => String(value)}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {selectedChartMode !== "candlestick" ? (
+          <p className="text-xs text-muted-foreground">
+            {t.crypto.detail.chartBrushHint}
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   );

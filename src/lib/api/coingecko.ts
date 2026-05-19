@@ -6,6 +6,8 @@ import type {
   CryptoMarketChartResponse,
   SortDirection,
   SortField,
+  CryptoOhlcPoint,
+  CryptoOhlcResponse,
 } from "@/lib/types/crypto";
 
 const BASE_URL = "https://api.coingecko.com/api/v3";
@@ -86,6 +88,17 @@ function normalizeChartData(
     price,
     marketCap: data.market_caps[index]?.[1] ?? null,
     volume: data.total_volumes[index]?.[1] ?? null,
+  }));
+}
+
+function normalizeOhlcData(data: CryptoOhlcResponse): CryptoOhlcPoint[] {
+  return data.map(([timestamp, open, high, low, close]) => ({
+    timestamp,
+    date: new Date(timestamp).toISOString(),
+    open,
+    high,
+    low,
+    close,
   }));
 }
 
@@ -176,6 +189,34 @@ export async function fetchCoinMarketChart(
   const data = (await res.json()) as CryptoMarketChartResponse;
 
   return normalizeChartData(data);
+}
+
+export async function fetchCoinOhlcChart(
+  id: string,
+  days: CryptoChartDays = 7,
+): Promise<CryptoOhlcPoint[]> {
+  const searchParams = new URLSearchParams({
+    vs_currency: "chf",
+    days: String(days),
+  });
+
+  const res = await fetch(
+    `${BASE_URL}/coins/${encodeURIComponent(id)}/ohlc?${searchParams}`,
+    {
+      headers: getHeaders(),
+      next: {
+        revalidate: 120,
+      },
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`CoinGecko /coins/${id}/ohlc error: ${res.status}`);
+  }
+
+  const data = (await res.json()) as CryptoOhlcResponse;
+
+  return normalizeOhlcData(data);
 }
 
 export async function fetchCryptoGlobalData(): Promise<{
