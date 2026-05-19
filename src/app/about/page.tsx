@@ -1,9 +1,13 @@
 import Image from "next/image";
 import type { Metadata } from "next";
+import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
+
+const REPOSITORY_URL =
+  "https://github.com/BlockShield-Systems/swiss-market-dashboard";
 
 type AboutContent = {
   projectHighlights: string[];
@@ -45,7 +49,7 @@ const aboutContent: Record<Locale, AboutContent> = {
       "Next.js-basierte Referenzanwendung mit App Router und TypeScript",
       "Zwei unterschiedliche Datendomänen: Krypto-Märkte und Schweizer Wetterdaten",
       "Fokus auf saubere UI-Architektur, typisierte API-Integration und wartbare Komponenten",
-      "Responsives Interface mit Theme-Support, Testing und CI/CD-Grundlage",
+      "Responsives Interface mit Theme-Support, Testing und Vercel Deployment",
     ],
     capabilityAreas: [
       {
@@ -70,19 +74,19 @@ const aboutContent: Record<Locale, AboutContent> = {
       },
     ],
     techStack: [
-      { category: "Framework", items: ["Next.js", "App Router", "Turbopack"] },
+      { category: "Framework", items: ["Next.js 16", "App Router", "Turbopack"] },
       { category: "Sprache", items: ["TypeScript", "Strict Mode"] },
-      { category: "Styling", items: ["Tailwind CSS", "shadcn/ui"] },
+      { category: "Styling", items: ["Tailwind CSS", "shadcn/ui-style Components"] },
       { category: "Charts", items: ["Recharts"] },
       { category: "Tabellen", items: ["TanStack Table v8"] },
       {
         category: "Testing",
-        items: ["Jest", "React Testing Library", "Playwright"],
+        items: ["Jest", "React Testing Library", "Playwright-ready"],
       },
-      { category: "CI/CD", items: ["GitHub Actions", "Vercel"] },
+      { category: "Deployment", items: ["Vercel", "GitHub"] },
       {
         category: "APIs",
-        items: ["CoinGecko", "Open-Meteo", "MeteoSwiss ICON"],
+        items: ["CoinGecko", "Open-Meteo"],
       },
     ],
     brandEcosystem: [
@@ -102,7 +106,7 @@ const aboutContent: Record<Locale, AboutContent> = {
     sections: {
       projectProfile: "Projektprofil",
       projectProfileText: [
-        "Das AI-Techart & Dynamics Dashboard ist eine technische Referenzanwendung, die reale Frontend-Kompetenz nicht über statische Präsentation, sondern über ein funktionales, datengetriebenes Produkt sichtbar macht.",
+        "Das Swiss Market Dashboard ist eine technische Referenzanwendung, die reale Frontend-Kompetenz nicht über statische Präsentation, sondern über ein funktionales, datengetriebenes Produkt sichtbar macht.",
         "Der Schwerpunkt liegt auf der strukturierten Umsetzung moderner Benutzeroberflächen, der Verarbeitung externer Datenquellen und einer Architektur, die auch im produktionsnahen Kontext nachvollziehbar bleibt.",
         "Inhaltlich verbindet die Anwendung zwei unterschiedliche Datendomänen: tabellarische Kryptomarktdaten sowie visuelle Wetter- und Zeitreihendaten für die Schweiz. Diese Kombination ist bewusst gewählt, um den Umgang mit unterschiedlichen Datenstrukturen, UI-Mustern und Präsentationslogiken zu demonstrieren.",
       ],
@@ -115,8 +119,8 @@ const aboutContent: Record<Locale, AboutContent> = {
       dataSources: "Datenquellen",
       coinGeckoTitle: "CoinGecko API",
       coinGeckoText:
-        "Nutzung für aktuelle Kryptomarktdaten, Rankings, Preisentwicklungen und Marktkapitalisierung. Im Dashboard werden diese Daten in eine klar lesbare tabellarische Darstellung mit Such- und Sortierfunktionen übersetzt.",
-      openMeteoTitle: "Open-Meteo / MeteoSwiss ICON",
+        "Nutzung für aktuelle Kryptomarktdaten, Rankings, Preisentwicklungen, Marktkapitalisierung und historische Chartdaten. Im Dashboard werden diese Daten in Tabellen, Kennzahlen und Detailansichten übersetzt.",
+      openMeteoTitle: "Open-Meteo API",
       openMeteoText:
         "Nutzung für Schweizer Wetter- und Prognosedaten mit Fokus auf Temperatur, Niederschlag und Wind. Diese Daten werden als Zeitreihen und visuelle Muster aufbereitet, um neben Tabellen auch chartbasierte Informationsdarstellung abzudecken.",
       authorTitle: "Autor & öffentliche Einordnung",
@@ -131,7 +135,7 @@ const aboutContent: Record<Locale, AboutContent> = {
       "Next.js-based reference application using the App Router and TypeScript",
       "Two distinct data domains: crypto markets and Swiss weather data",
       "Focused on clean UI architecture, typed API integration and maintainable components",
-      "Responsive interface with theme support, testing and CI/CD foundations",
+      "Responsive interface with theme support, testing and Vercel deployment",
     ],
     capabilityAreas: [
       {
@@ -156,19 +160,19 @@ const aboutContent: Record<Locale, AboutContent> = {
       },
     ],
     techStack: [
-      { category: "Framework", items: ["Next.js", "App Router", "Turbopack"] },
+      { category: "Framework", items: ["Next.js 16", "App Router", "Turbopack"] },
       { category: "Language", items: ["TypeScript", "Strict Mode"] },
-      { category: "Styling", items: ["Tailwind CSS", "shadcn/ui"] },
+      { category: "Styling", items: ["Tailwind CSS", "shadcn/ui-style components"] },
       { category: "Charts", items: ["Recharts"] },
       { category: "Tables", items: ["TanStack Table v8"] },
       {
         category: "Testing",
-        items: ["Jest", "React Testing Library", "Playwright"],
+        items: ["Jest", "React Testing Library", "Playwright-ready"],
       },
-      { category: "CI/CD", items: ["GitHub Actions", "Vercel"] },
+      { category: "Deployment", items: ["Vercel", "GitHub"] },
       {
         category: "APIs",
-        items: ["CoinGecko", "Open-Meteo", "MeteoSwiss ICON"],
+        items: ["CoinGecko", "Open-Meteo"],
       },
     ],
     brandEcosystem: [
@@ -188,7 +192,7 @@ const aboutContent: Record<Locale, AboutContent> = {
     sections: {
       projectProfile: "Project Profile",
       projectProfileText: [
-        "The AI-Techart & Dynamics Dashboard is a technical reference application designed to demonstrate real frontend capability through a functional, data-driven product rather than a static presentation.",
+        "The Swiss Market Dashboard is a technical reference application designed to demonstrate real frontend capability through a functional, data-driven product rather than a static presentation.",
         "Its focus lies in the structured implementation of modern user interfaces, external data integration and an architecture that remains understandable in production-oriented contexts.",
         "The application intentionally combines two different data domains: tabular crypto market data and visual weather/time-series data for Switzerland. This combination highlights the ability to work with different data structures, UI patterns and presentation logics.",
       ],
@@ -201,8 +205,8 @@ const aboutContent: Record<Locale, AboutContent> = {
       dataSources: "Data Sources",
       coinGeckoTitle: "CoinGecko API",
       coinGeckoText:
-        "Used for live crypto market data, rankings, price performance and market capitalization. Within the dashboard, the data is translated into a clearly readable table view with search and sorting functionality.",
-      openMeteoTitle: "Open-Meteo / MeteoSwiss ICON",
+        "Used for live crypto market data, rankings, price performance, market capitalization and historical chart data. Within the dashboard, the data is translated into tables, metrics and detail views.",
+      openMeteoTitle: "Open-Meteo API",
       openMeteoText:
         "Used for Swiss weather and forecast data with focus on temperature, precipitation and wind. The data is prepared as time-series and visual patterns to cover chart-based information delivery in addition to tables.",
       authorTitle: "Author & Public Positioning",
@@ -270,10 +274,7 @@ export default async function AboutPage() {
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           {content.capabilityAreas.map((area) => (
-            <div
-              key={area.title}
-              className="rounded-xl border bg-muted/20 p-4"
-            >
+            <div key={area.title} className="rounded-xl border bg-muted/20 p-4">
               <h2 className="text-sm font-semibold text-foreground">
                 {area.title}
               </h2>
@@ -291,10 +292,7 @@ export default async function AboutPage() {
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           {content.brandEcosystem.map((brand) => (
-            <div
-              key={brand.name}
-              className="rounded-xl border bg-muted/20 p-4"
-            >
+            <div key={brand.name} className="rounded-xl border bg-muted/20 p-4">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl border bg-background/80 p-2">
                 <Image
                   src={brand.image}
@@ -360,7 +358,8 @@ export default async function AboutPage() {
               {content.sections.coinGeckoText}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              <code>/coins/markets</code>, <code>/global</code>
+              <code>/coins/markets</code>, <code>/coins/{"{id}"}</code>,{" "}
+              <code>/coins/{"{id}"}/market_chart</code>, <code>/global</code>
             </p>
           </div>
 
@@ -392,14 +391,21 @@ export default async function AboutPage() {
                 href="https://ai-techart.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline underline-offset-4 hover:text-foreground"
+                className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
               >
                 {t.about.websiteLabel}
+                <ExternalLink className="size-3" />
               </a>
 
-              <Badge variant="outline" className="font-normal">
-                {t.about.repositoryPendingLabel}
-              </Badge>
+              <a
+                href={REPOSITORY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
+              >
+                {t.about.repositoryLabel}
+                <ExternalLink className="size-3" />
+              </a>
             </div>
           </div>
         </CardContent>

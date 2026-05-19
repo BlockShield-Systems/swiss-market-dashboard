@@ -106,6 +106,15 @@ export type Dictionary = {
       chartLoading: string;
       chartLoadError: string;
     };
+    legend: {
+      title: string;
+      rank: string;
+      marketCap: string;
+      volume: string;
+      change24h: string;
+      change7d: string;
+      colors: string;
+    };
   };
   weather: {
     title: string;
@@ -126,6 +135,14 @@ export type Dictionary = {
     averageRain7dLabel: string;
     cities: Record<SwissCityKey, string>;
     weatherCodes: Record<number, string>;
+    legend: {
+      title: string;
+      temperature: string;
+      precipitation: string;
+      wind: string;
+      weatherCode: string;
+      source: string;
+    };
   };
   about: {
     title: string;
@@ -281,6 +298,21 @@ const dictionaries: Record<Locale, Dictionary> = {
         chartLoading: "Chartdaten werden geladen …",
         chartLoadError: "Chartdaten konnten nicht geladen werden.",
       },
+      legend: {
+        title: "Legende",
+        rank:
+          "Rang zeigt die CoinGecko-Position nach Marktkapitalisierung. Rang 1 entspricht dem grössten Marktwert.",
+        marketCap:
+          "Market Cap beschreibt den geschätzten Gesamtwert aller im Umlauf befindlichen Coins.",
+        volume:
+          "Volumen zeigt das gehandelte Volumen der letzten 24 Stunden in CHF.",
+        change24h:
+          "24h zeigt die Preisveränderung innerhalb der letzten 24 Stunden.",
+        change7d:
+          "7d zeigt die Preisveränderung innerhalb der letzten sieben Tage.",
+        colors:
+          "Positive Werte werden grün dargestellt, negative Werte rot.",
+      },
     },
     weather: {
       title: "Wetter Schweiz",
@@ -336,6 +368,19 @@ const dictionaries: Record<Locale, Dictionary> = {
         95: "⛈️ Gewitter",
         96: "⛈️ Gewitter mit Hagel",
         99: "⛈️ Schweres Gewitter mit Hagel",
+      },
+      legend: {
+        title: "Legende",
+        temperature:
+          "Temperatur zeigt tägliche Minimal- und Maximalwerte in Grad Celsius.",
+        precipitation:
+          "Niederschlag zeigt die erwartete Regen- oder Schneemenge in Millimetern pro Tag.",
+        wind:
+          "Wind zeigt die maximale Windgeschwindigkeit pro Tag in km/h.",
+        weatherCode:
+          "Wettercodes werden als verständliche Symbole und Kurzbeschreibungen dargestellt.",
+        source:
+          "Datenquelle ist die Open-Meteo Weather API für ausgewählte Schweizer Städte.",
       },
     },
     about: {
@@ -496,6 +541,21 @@ const dictionaries: Record<Locale, Dictionary> = {
         chartLoading: "Loading chart data …",
         chartLoadError: "Chart data could not be loaded.",
       },
+      legend: {
+        title: "Legend",
+        rank:
+          "Rank shows the CoinGecko position by market capitalization. Rank 1 represents the largest market value.",
+        marketCap:
+          "Market cap describes the estimated total value of all circulating coins.",
+        volume:
+          "Volume shows the traded volume over the last 24 hours in CHF.",
+        change24h:
+          "24h shows the price change over the last 24 hours.",
+        change7d:
+          "7d shows the price change over the last seven days.",
+        colors:
+          "Positive values are shown in green, negative values in red.",
+      },
     },
     weather: {
       title: "Swiss Weather",
@@ -551,6 +611,19 @@ const dictionaries: Record<Locale, Dictionary> = {
         95: "⛈️ Thunderstorm",
         96: "⛈️ Thunderstorm with hail",
         99: "⛈️ Severe thunderstorm with hail",
+      },
+      legend: {
+        title: "Legend",
+        temperature:
+          "Temperature shows daily minimum and maximum values in degrees Celsius.",
+        precipitation:
+          "Precipitation shows the expected rain or snow amount in millimeters per day.",
+        wind:
+          "Wind shows the maximum wind speed per day in km/h.",
+        weatherCode:
+          "Weather codes are translated into readable icons and short descriptions.",
+        source:
+          "Data source is the Open-Meteo Weather API for selected Swiss cities.",
       },
     },
     about: {
