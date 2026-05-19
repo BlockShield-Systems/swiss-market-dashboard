@@ -48,14 +48,30 @@ export default async function WeatherPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
-            {legendItems.map((item) => (
-              <li key={item} className="flex gap-2">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="grid gap-3 text-sm text-muted-foreground md:grid-cols-2 md:gap-x-8">
+            <ul className="space-y-3">
+              {legendItems.slice(0, 3).map((item) => (
+                <li
+                  key={item}
+                  className="grid grid-cols-[0.375rem_1fr] items-start gap-3 leading-6"
+                >
+                  <span className="mt-2 size-1.5 rounded-full bg-primary" />
+                  <span className="min-w-0">{item}</span>
+                </li>
+              ))}
+            </ul>
+            <ul className="space-y-3">
+              {legendItems.slice(3).map((item) => (
+                <li
+                  key={item}
+                  className="grid grid-cols-[0.375rem_1fr] items-start gap-3 leading-6"
+                >
+                  <span className="mt-2 size-1.5 rounded-full bg-primary" />
+                  <span className="min-w-0">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </CardContent>
       </Card>
 
