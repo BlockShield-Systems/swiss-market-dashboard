@@ -31,36 +31,26 @@ function formatPrice(value: number, locale: Locale): string {
   }).format(value);
 }
 
-function getCssColorVariable(name: string, fallback: string): string {
-  if (typeof window === "undefined") {
-    return fallback;
+function getChartColors() {
+  const isDark =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark");
+
+  if (isDark) {
+    return {
+      backgroundColor: "#1f1f1f",
+      textColor: "#f5f5f5",
+      gridColor: "rgba(255, 255, 255, 0.10)",
+      borderColor: "rgba(255, 255, 255, 0.16)",
+    };
   }
 
-  const value = window
-    .getComputedStyle(document.documentElement)
-    .getPropertyValue(name)
-    .trim();
-
-  if (!value) {
-    return fallback;
-  }
-
-  const normalized = value.toLowerCase();
-
-  if (
-    normalized.startsWith("#") ||
-    normalized.startsWith("rgb(") ||
-    normalized.startsWith("rgba(") ||
-    normalized.startsWith("hsl(") ||
-    normalized.startsWith("hsla(") ||
-    normalized.startsWith("oklch(") ||
-    normalized.startsWith("oklab(") ||
-    normalized.startsWith("color(")
-  ) {
-    return value;
-  }
-
-  return `hsl(${value})`;
+  return {
+    backgroundColor: "#ffffff",
+    textColor: "#171717",
+    gridColor: "rgba(0, 0, 0, 0.10)",
+    borderColor: "rgba(0, 0, 0, 0.16)",
+  };
 }
 
 function toCandlestickData(
@@ -147,95 +137,110 @@ export function CoinCandlestickChart({
     let cancelled = false;
 
     async function renderChart() {
-      const {
-        CandlestickSeries,
-        ColorType,
-        CrosshairMode,
-        createChart,
-      } = await import("lightweight-charts");
+      try {
+        const {
+          CandlestickSeries,
+          ColorType,
+          CrosshairMode,
+          createChart,
+        } = await import("lightweight-charts");
 
-      if (cancelled || !containerRef.current) {
-        return;
-      }
-
-      const containerElement = containerRef.current;
-
-      const backgroundColor = getCssColorVariable("--card", "#ffffff");
-      const textColor = getCssColorVariable("--foreground", "#111827");
-      const gridColor = getCssColorVariable("--border", "#e5e7eb");
-
-      chart = createChart(containerElement, {
-        width: Math.max(containerElement.clientWidth, 320),
-        height: 380,
-        layout: {
-          background: {
-            type: ColorType.Solid,
-            color: backgroundColor,
-          },
-          textColor,
-        },
-        grid: {
-          vertLines: {
-            color: gridColor,
-          },
-          horzLines: {
-            color: gridColor,
-          },
-        },
-        crosshair: {
-          mode: CrosshairMode.Normal,
-        },
-        localization: {
-          priceFormatter: (price: number) => formatPrice(price, locale),
-        },
-        rightPriceScale: {
-          borderColor: gridColor,
-          visible: true,
-        },
-        timeScale: {
-          borderColor: gridColor,
-          timeVisible: true,
-          secondsVisible: false,
-          rightOffset: 4,
-          barSpacing: 10,
-        },
-        handleScroll: {
-          mouseWheel: true,
-          pressedMouseMove: true,
-          horzTouchDrag: true,
-          vertTouchDrag: false,
-        },
-        handleScale: {
-          axisPressedMouseMove: true,
-          mouseWheel: true,
-          pinch: true,
-        },
-      });
-
-      const candlestickSeries = chart.addSeries(CandlestickSeries, {
-        upColor: "#16a34a",
-        downColor: "#dc2626",
-        borderUpColor: "#16a34a",
-        borderDownColor: "#dc2626",
-        wickUpColor: "#16a34a",
-        wickDownColor: "#dc2626",
-      });
-
-      candlestickSeries.setData(toCandlestickData(data));
-      chart.timeScale().fitContent();
-
-      resizeObserver = new ResizeObserver(([entry]) => {
-        if (!entry || !chart) {
+        if (cancelled || !containerRef.current) {
           return;
         }
 
-        chart.applyOptions({
-          width: Math.max(Math.floor(entry.contentRect.width), 320),
-          height: 380,
-        });
-      });
+        const containerElement = containerRef.current;
+        const { backgroundColor, textColor, gridColor, borderColor } =
+          getChartColors();
 
-      resizeObserver.observe(containerElement);
+        chart = createChart(containerElement, {
+          width: Math.max(containerElement.clientWidth, 320),
+          height: 380,
+          layout: {
+            background: {
+              type: ColorType.Solid,
+              color: backgroundColor,
+            },
+            textColor,
+          },
+          grid: {
+            vertLines: {
+              color: gridColor,
+            },
+            horzLines: {
+              color: gridColor,
+            },
+          },
+          crosshair: {
+            mode: CrosshairMode.Normal,
+          },
+          localization: {
+            priceFormatter: (price: number) => formatPrice(price, locale),
+          },
+          rightPriceScale: {
+            borderColor,
+            visible: true,
+            autoScale: true,
+            scaleMargins: {
+              top: 0.12,
+              bottom: 0.12,
+            },
+          },
+          timeScale: {
+            borderColor,
+            timeVisible: true,
+            secondsVisible: false,
+            rightOffset: 8,
+            barSpacing: 12,
+            fixLeftEdge: false,
+            fixRightEdge: false,
+            lockVisibleTimeRangeOnResize: false,
+          },
+          handleScroll: {
+            mouseWheel: true,
+            pressedMouseMove: true,
+            horzTouchDrag: true,
+            vertTouchDrag: true,
+          },
+          handleScale: {
+            axisPressedMouseMove: true,
+            mouseWheel: true,
+            pinch: true,
+          },
+        });
+
+        const candlestickSeries = chart.addSeries(CandlestickSeries, {
+          priceScaleId: "right",
+          upColor: "#22c55e",
+          downColor: "#ef4444",
+          borderUpColor: "#22c55e",
+          borderDownColor: "#ef4444",
+          wickUpColor: "#22c55e",
+          wickDownColor: "#ef4444",
+        });
+
+        candlestickSeries.setData(toCandlestickData(data));
+        chart.timeScale().fitContent();
+
+        resizeObserver = new ResizeObserver(([entry]) => {
+          if (!entry || !chart) {
+            return;
+          }
+
+          chart.applyOptions({
+            width: Math.max(Math.floor(entry.contentRect.width), 320),
+            height: 380,
+          });
+        });
+
+        resizeObserver.observe(containerElement);
+      } catch (chartError) {
+        console.error("Failed to render candlestick chart:", chartError);
+
+        if (!cancelled) {
+          setError(t.crypto.detail.chartOhlcLoadError);
+        }
+      }
     }
 
     void renderChart();
@@ -245,7 +250,7 @@ export function CoinCandlestickChart({
       resizeObserver?.disconnect();
       chart?.remove();
     };
-  }, [data, locale]);
+  }, [data, locale, t.crypto.detail.chartOhlcLoadError]);
 
   return (
     <div className="space-y-3">
