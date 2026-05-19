@@ -31,7 +31,7 @@ function formatPrice(value: number, locale: Locale): string {
   }).format(value);
 }
 
-function getCssHslVariable(name: string, fallback: string): string {
+function getCssColorVariable(name: string, fallback: string): string {
   if (typeof window === "undefined") {
     return fallback;
   }
@@ -41,7 +41,26 @@ function getCssHslVariable(name: string, fallback: string): string {
     .getPropertyValue(name)
     .trim();
 
-  return value ? `hsl(${value})` : fallback;
+  if (!value) {
+    return fallback;
+  }
+
+  const normalized = value.toLowerCase();
+
+  if (
+    normalized.startsWith("#") ||
+    normalized.startsWith("rgb(") ||
+    normalized.startsWith("rgba(") ||
+    normalized.startsWith("hsl(") ||
+    normalized.startsWith("hsla(") ||
+    normalized.startsWith("oklch(") ||
+    normalized.startsWith("oklab(") ||
+    normalized.startsWith("color(")
+  ) {
+    return value;
+  }
+
+  return `hsl(${value})`;
 }
 
 function toCandlestickData(
@@ -114,7 +133,7 @@ export function CoinCandlestickChart({
     return () => {
       ignore = true;
     };
-  }, [coinId, days, locale, t.crypto.detail.chartOhlcLoadError]);
+  }, [coinId, days, t.crypto.detail.chartOhlcLoadError]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -139,12 +158,14 @@ export function CoinCandlestickChart({
         return;
       }
 
-      const backgroundColor = getCssHslVariable("--card", "#ffffff");
-      const textColor = getCssHslVariable("--foreground", "#111827");
-      const gridColor = getCssHslVariable("--border", "#e5e7eb");
+      const containerElement = containerRef.current;
 
-      chart = createChart(containerRef.current, {
-        width: containerRef.current.clientWidth,
+      const backgroundColor = getCssColorVariable("--card", "#ffffff");
+      const textColor = getCssColorVariable("--foreground", "#111827");
+      const gridColor = getCssColorVariable("--border", "#e5e7eb");
+
+      chart = createChart(containerElement, {
+        width: Math.max(containerElement.clientWidth, 320),
         height: 380,
         layout: {
           background: {
@@ -169,11 +190,14 @@ export function CoinCandlestickChart({
         },
         rightPriceScale: {
           borderColor: gridColor,
+          visible: true,
         },
         timeScale: {
           borderColor: gridColor,
           timeVisible: true,
           secondsVisible: false,
+          rightOffset: 4,
+          barSpacing: 10,
         },
         handleScroll: {
           mouseWheel: true,
@@ -191,7 +215,8 @@ export function CoinCandlestickChart({
       const candlestickSeries = chart.addSeries(CandlestickSeries, {
         upColor: "#16a34a",
         downColor: "#dc2626",
-        borderVisible: false,
+        borderUpColor: "#16a34a",
+        borderDownColor: "#dc2626",
         wickUpColor: "#16a34a",
         wickDownColor: "#dc2626",
       });
@@ -205,11 +230,12 @@ export function CoinCandlestickChart({
         }
 
         chart.applyOptions({
-          width: Math.floor(entry.contentRect.width),
+          width: Math.max(Math.floor(entry.contentRect.width), 320),
+          height: 380,
         });
       });
 
-      resizeObserver.observe(containerRef.current);
+      resizeObserver.observe(containerElement);
     }
 
     void renderChart();
