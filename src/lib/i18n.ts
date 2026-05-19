@@ -145,6 +145,11 @@ export type Dictionary = {
     maxSeriesLabel: string;
     minSeriesLabel: string;
     currentConditionsTitle: string;
+    dailyOverviewTitle: string;
+    weatherStateLabel: string;
+    forecastCardsTitle: string;
+    todayLabel: string;
+    windChartLabel: string;
     maxMinLabel: string;
     precipitationLabel: string;
     windMaxLabel: string;
@@ -362,6 +367,11 @@ const dictionaries: Record<Locale, Dictionary> = {
       maxSeriesLabel: "Maximum",
       minSeriesLabel: "Minimum",
       currentConditionsTitle: "Aktuelles Wetter",
+      dailyOverviewTitle: "Tagesübersicht",
+      weatherStateLabel: "Wetterzustand",
+      forecastCardsTitle: "7-Tage-Vorhersage",
+      todayLabel: "Heute",
+      windChartLabel: "Windgeschwindigkeit",
       maxMinLabel: "Max. / Min.",
       precipitationLabel: "Niederschlag",
       windMaxLabel: "Max. Wind",
@@ -623,6 +633,11 @@ const dictionaries: Record<Locale, Dictionary> = {
       maxSeriesLabel: "Maximum",
       minSeriesLabel: "Minimum",
       currentConditionsTitle: "Current Weather",
+      dailyOverviewTitle: "Daily overview",
+      weatherStateLabel: "Weather condition",
+      forecastCardsTitle: "7-day forecast",
+      todayLabel: "Today",
+      windChartLabel: "Wind speed",
       maxMinLabel: "Max / Min",
       precipitationLabel: "Precipitation",
       windMaxLabel: "Max wind",
