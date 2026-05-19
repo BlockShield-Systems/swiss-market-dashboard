@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { CoinPriceChart } from "@/components/crypto/coin-price-chart";
+import { ExpandableDescription } from "@/components/crypto/expandable-description";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -313,9 +314,11 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
           </CardHeader>
           <CardContent>
             {description ? (
-              <p className="text-sm leading-7 text-muted-foreground">
-                {description}
-              </p>
+              <ExpandableDescription
+                text={description}
+                showMoreLabel={t.crypto.detail.showMore}
+                showLessLabel={t.crypto.detail.showLess}
+              />
             ) : (
               <p className="text-sm text-muted-foreground">
                 {t.crypto.detail.noDescription}
@@ -323,7 +326,6 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
             )}
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>{t.crypto.detail.marketData}</CardTitle>

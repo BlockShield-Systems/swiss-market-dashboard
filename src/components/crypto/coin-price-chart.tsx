@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
   Area,
   AreaChart,
+  Brush,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -27,6 +28,7 @@ interface CoinPriceChartProps {
 
 type ChartDataPoint = CryptoMarketChartPoint & {
   label: string;
+  tooltipLabel: string;
 };
 
 const CHART_RANGES: CryptoChartDays[] = [7, 30, 90];
@@ -58,7 +60,20 @@ function formatDateLabel(timestamp: number, locale: Locale): string {
   });
 }
 
-function getRangeLabel(days: CryptoChartDays, t: ReturnType<typeof getDictionary>) {
+function formatTooltipDateLabel(timestamp: number, locale: Locale): string {
+  return new Date(timestamp).toLocaleString(getLocaleCode(locale), {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getRangeLabel(
+  days: CryptoChartDays,
+  t: ReturnType<typeof getDictionary>,
+) {
   if (days === 7) {
     return t.crypto.detail.chartRange7d;
   }
@@ -89,6 +104,7 @@ export function CoinPriceChart({
       data.map((point) => ({
         ...point,
         label: formatDateLabel(point.timestamp, locale),
+        tooltipLabel: formatTooltipDateLabel(point.timestamp, locale),
       })),
     [data, locale],
   );
@@ -130,7 +146,12 @@ export function CoinPriceChart({
   return (
     <Card>
       <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle>{t.crypto.detail.priceChartTitle}</CardTitle>
+        <div className="space-y-1">
+          <CardTitle>{t.crypto.detail.priceChartTitle}</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {t.crypto.detail.chartPriceInChf}
+          </p>
+        </div>
 
         <div className="flex flex-wrap gap-2">
           {CHART_RANGES.map((days) => (
@@ -148,7 +169,7 @@ export function CoinPriceChart({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {error ? (
           <p className="text-sm text-destructive">{error}</p>
         ) : null}
@@ -159,8 +180,39 @@ export function CoinPriceChart({
           </p>
         ) : null}
 
-        <ResponsiveContainer width="100%" height={320}>
-          <AreaChart data={chartData}>
+        <div className="grid gap-3 rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground md:grid-cols-3">
+          <div>
+            <p className="font-medium text-foreground">
+              {t.crypto.detail.chartTimeframe}
+            </p>
+            <p>{getRangeLabel(selectedDays, t)}</p>
+          </div>
+
+          <div>
+            <p className="font-medium text-foreground">
+              {t.crypto.detail.chartSource}
+            </p>
+            <p>CoinGecko</p>
+          </div>
+
+          <div>
+            <p className="font-medium text-foreground">
+              {t.crypto.detail.chartZoomHint}
+            </p>
+            <p>{t.crypto.detail.chartBrushHint}</p>
+          </div>
+        </div>
+
+        <ResponsiveContainer width="100%" height={380}>
+          <AreaChart
+            data={chartData}
+            margin={{
+              top: 10,
+              right: 12,
+              left: 0,
+              bottom: 8,
+            }}
+          >
             <defs>
               <linearGradient
                 id="coinPriceGradient"
@@ -175,18 +227,34 @@ export function CoinPriceChart({
             </defs>
 
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 12 }}
+              minTickGap={24}
+            />
+
             <YAxis
               tick={{ fontSize: 12 }}
               tickFormatter={(value) => formatAxisPrice(Number(value), locale)}
-              width={70}
+              width={72}
+              domain={["dataMin", "dataMax"]}
             />
+
             <Tooltip
               formatter={(value) => [
                 formatPrice(Number(value), locale),
                 t.crypto.detail.price,
               ]}
-              labelFormatter={(label) => `${t.crypto.detail.date}: ${label}`}
+              labelFormatter={(_, payload) => {
+                const point = payload?.[0]?.payload as
+                  | ChartDataPoint
+                  | undefined;
+
+                return point
+                  ? `${t.crypto.detail.date}: ${point.tooltipLabel}`
+                  : "";
+              }}
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
@@ -194,6 +262,7 @@ export function CoinPriceChart({
                 fontSize: "12px",
               }}
             />
+
             <Area
               type="monotone"
               dataKey="price"
@@ -203,6 +272,15 @@ export function CoinPriceChart({
               dot={false}
               activeDot={{ r: 4 }}
               name={t.crypto.detail.price}
+              isAnimationActive={false}
+            />
+
+            <Brush
+              dataKey="label"
+              height={28}
+              stroke="#3b82f6"
+              travellerWidth={8}
+              tickFormatter={(value) => String(value)}
             />
           </AreaChart>
         </ResponsiveContainer>

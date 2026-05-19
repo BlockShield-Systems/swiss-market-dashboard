@@ -105,6 +105,13 @@ export type Dictionary = {
       chartRange90d: string;
       chartLoading: string;
       chartLoadError: string;
+      showMore: string;
+      showLess: string;
+      chartSource: string;
+      chartPriceInChf: string;
+      chartTimeframe: string;
+      chartZoomHint: string;
+      chartBrushHint: string;
     };
     legend: {
       title: string;
@@ -297,6 +304,13 @@ const dictionaries: Record<Locale, Dictionary> = {
         chartRange90d: "90 Tage",
         chartLoading: "Chartdaten werden geladen …",
         chartLoadError: "Chartdaten konnten nicht geladen werden.",
+        showMore: "Mehr anzeigen",
+        showLess: "Weniger anzeigen",
+        chartSource: "Datenquelle",
+        chartPriceInChf: "Preisverlauf in Schweizer Franken (CHF).",
+        chartTimeframe: "Zeitraum",
+        chartZoomHint: "Zoom / Scroll",
+        chartBrushHint: "Den unteren Schieberegler ziehen, um den sichtbaren Zeitraum einzugrenzen.",
       },
       legend: {
         title: "Legende",
@@ -540,6 +554,13 @@ const dictionaries: Record<Locale, Dictionary> = {
         chartRange90d: "90 days",
         chartLoading: "Loading chart data …",
         chartLoadError: "Chart data could not be loaded.",
+        showMore: "Show more",
+        showLess: "Show less",
+        chartSource: "Data source",
+        chartPriceInChf: "Price history in Swiss francs (CHF).",
+        chartTimeframe: "Timeframe",
+        chartZoomHint: "Zoom / scroll",
+        chartBrushHint: "Drag the lower range slider to narrow the visible timeframe.",
       },
       legend: {
         title: "Legend",
