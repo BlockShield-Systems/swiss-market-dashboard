@@ -5,13 +5,24 @@ import { fetchCoinDetails } from "@/lib/api/coingecko";
 import { createMarketInsight } from "@/lib/db/queries/market-insights";
 import { aiMarketSummaryEnabled } from "@/lib/flags";
 import type { Locale } from "@/lib/i18n";
+import { getAiMarketSummaryRateLimit } from "@/lib/rate-limit";
+import { getClientIdentifier } from "@/lib/request-ip";
+import { getRedis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
+
+const AI_SUMMARY_CACHE_TTL_SECONDS = 60 * 30;
 
 const requestSchema = z.object({
   coinId: z.string().trim().min(1).max(80),
   locale: z.enum(["de", "en"]).default("de"),
 });
+
+type AiSummaryCacheBody = {
+  insight: Awaited<ReturnType<typeof createMarketInsight>>;
+  usage: unknown;
+  cached: false;
+};
 
 function getModel() {
   return process.env.AI_MARKET_SUMMARY_MODEL ?? "alibaba/qwen-3-14b";
@@ -37,6 +48,10 @@ function toOptionalNumber(value: number | null | undefined) {
   }
 
   return value;
+}
+
+function buildAiSummaryCacheKey(coinId: string, locale: "de" | "en") {
+  return `ai-summary:${locale}:${coinId.toLowerCase()}`;
 }
 
 function buildPrompt({
@@ -117,7 +132,12 @@ export async function POST(request: Request) {
       {
         error: "AI market summaries are disabled.",
       },
-      { status: 403 },
+      {
+        status: 403,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
     );
   }
 
@@ -126,7 +146,12 @@ export async function POST(request: Request) {
       {
         error: "AI Gateway authentication is not configured.",
       },
-      { status: 500 },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
     );
   }
 
@@ -140,11 +165,63 @@ export async function POST(request: Request) {
           error: "Invalid request body.",
           issues: parsed.error.flatten(),
         },
-        { status: 400 },
+        {
+          status: 400,
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        },
       );
     }
 
     const { coinId, locale } = parsed.data;
+
+    const identifier = getClientIdentifier(request);
+    const rateLimit = getAiMarketSummaryRateLimit();
+    const rateLimitResult = await rateLimit.limit(identifier);
+
+    const rateLimitHeaders = {
+      "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+      "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+      "X-RateLimit-Reset": rateLimitResult.reset.toString(),
+    };
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "Too many AI summary requests. Please try again later.",
+        },
+        {
+          status: 429,
+          headers: {
+            ...rateLimitHeaders,
+            "Cache-Control": "no-store",
+          },
+        },
+      );
+    }
+
+    const redis = getRedis();
+    const cacheKey = buildAiSummaryCacheKey(coinId, locale);
+    const cachedResponse = await redis.get<AiSummaryCacheBody>(cacheKey);
+
+    if (cachedResponse) {
+      return NextResponse.json(
+        {
+          ...cachedResponse,
+          cached: true,
+        },
+        {
+          status: 200,
+          headers: {
+            ...rateLimitHeaders,
+            "Cache-Control": "no-store",
+            "X-AI-Cache": "HIT",
+          },
+        },
+      );
+    }
+
     const coin = await fetchCoinDetails(coinId);
 
     const priceChf = coin.market_data.current_price.chf;
@@ -178,7 +255,14 @@ export async function POST(request: Request) {
         {
           error: "AI Gateway returned an empty summary.",
         },
-        { status: 502 },
+        {
+          status: 502,
+          headers: {
+            ...rateLimitHeaders,
+            "Cache-Control": "no-store",
+            "X-AI-Cache": "MISS",
+          },
+        },
       );
     }
 
@@ -202,18 +286,24 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(
-      {
-        insight: created,
-        usage,
+    const responseBody: AiSummaryCacheBody = {
+      insight: created,
+      usage: usage ?? null,
+      cached: false,
+    };
+
+    await redis.set(cacheKey, responseBody, {
+      ex: AI_SUMMARY_CACHE_TTL_SECONDS,
+    });
+
+    return NextResponse.json(responseBody, {
+      status: 201,
+      headers: {
+        ...rateLimitHeaders,
+        "Cache-Control": "no-store",
+        "X-AI-Cache": "MISS",
       },
-      {
-        status: 201,
-        headers: {
-          "Cache-Control": "no-store",
-        },
-      },
-    );
+    });
   } catch (error) {
     console.error("AI market summary failed:", error);
 
@@ -221,7 +311,12 @@ export async function POST(request: Request) {
       {
         error: "Failed to generate market summary.",
       },
-      { status: 500 },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
     );
   }
 }
