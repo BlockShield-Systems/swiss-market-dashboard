@@ -5,6 +5,8 @@ import { getLocale } from "@/lib/i18n-server";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next"
 import { SITE_CONFIG } from "@/lib/constants";
 import "./globals.css";
 
@@ -48,6 +50,8 @@ export default async function RootLayout({
             </div>
           </PreferencesProvider>
         </ThemeProvider>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
