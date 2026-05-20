@@ -26,3 +26,4 @@ export async function createMarketInsight(values: NewMarketInsight) {
 
   return created;
 }
+
