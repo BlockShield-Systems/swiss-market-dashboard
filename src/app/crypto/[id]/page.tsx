@@ -8,9 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchCoinDetails, fetchCoinMarketChart } from "@/lib/api/coingecko";
+import { defaultCryptoChartMode } from "@/lib/flags";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
-import type { CryptoCoinDetails } from "@/lib/types/crypto";
+import type {
+  CryptoChartMode,
+  CryptoCoinDetails,
+  CryptoMarketChartPoint,
+} from "@/lib/types/crypto";
 
 interface CoinDetailPageProps {
   params: Promise<{
@@ -113,13 +118,7 @@ function getPrimaryExplorer(coin: CryptoCoinDetails): string | null {
   return explorer ?? null;
 }
 
-function StatCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <Card size="sm">
       <CardHeader>
@@ -181,12 +180,14 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
   const t = getDictionary(locale);
 
   let coin: CryptoCoinDetails;
-  let chartData;
+  let chartData: CryptoMarketChartPoint[];
+  let initialChartMode: CryptoChartMode;
 
   try {
-    [coin, chartData] = await Promise.all([
+    [coin, chartData, initialChartMode] = await Promise.all([
       fetchCoinDetails(id),
       fetchCoinMarketChart(id, 7),
+      defaultCryptoChartMode(),
     ]);
   } catch (err) {
     console.error("Failed to load coin detail page:", err);
@@ -252,9 +253,9 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
               <h1 className="text-3xl font-bold tracking-tight">
                 {coin.name}
               </h1>
-              <Badge variant="secondary">
-                {coin.symbol.toUpperCase()}
-              </Badge>
+
+              <Badge variant="secondary">{coin.symbol.toUpperCase()}</Badge>
+
               {coin.market_cap_rank ? (
                 <Badge variant="outline">
                   {t.crypto.detail.rank} #{coin.market_cap_rank}
@@ -305,7 +306,12 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
         />
       </div>
 
-      <CoinPriceChart coinId={coin.id} initialData={chartData} initialDays={7} />
+      <CoinPriceChart
+        coinId={coin.id}
+        initialData={chartData}
+        initialDays={7}
+        initialMode={initialChartMode}
+      />
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <Card>
@@ -326,6 +332,7 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
             )}
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>{t.crypto.detail.marketData}</CardTitle>

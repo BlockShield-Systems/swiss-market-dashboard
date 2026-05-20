@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLatestMarketInsights } from "@/lib/db/queries/market-insights";
 import { getLocale } from "@/lib/i18n-server";
+import { notFound } from "next/navigation";
+import { marketInsightsEnabled } from "@/lib/flags";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,12 @@ function formatDate(value: Date, locale: string) {
 }
 
 export default async function InsightsPage() {
+  const enabled = await marketInsightsEnabled();
+
+  if (!enabled) {
+    notFound();
+  }
+
   const locale = await getLocale();
   const insights = await getLatestMarketInsights();
 

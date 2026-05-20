@@ -28,6 +28,7 @@ interface CoinPriceChartProps {
   coinId: string;
   initialData: CryptoMarketChartPoint[];
   initialDays?: CryptoChartDays;
+  initialMode?: CryptoChartMode;
 }
 
 type ChartDataPoint = CryptoMarketChartPoint & {
@@ -109,14 +110,17 @@ export function CoinPriceChart({
   coinId,
   initialData,
   initialDays = 7,
+  initialMode = "area",
 }: CoinPriceChartProps) {
   const { locale } = usePreferences();
   const t = getDictionary(locale);
 
   const [selectedDays, setSelectedDays] =
     useState<CryptoChartDays>(initialDays);
+
   const [selectedChartMode, setSelectedChartMode] =
-    useState<CryptoChartMode>("area");
+    useState<CryptoChartMode>(initialMode);
+
   const [data, setData] = useState<CryptoMarketChartPoint[]>(initialData);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
