@@ -1,89 +1,75 @@
 # Swiss Market Dashboard
 
-Production-oriented fullstack dashboard for Swiss market intelligence, crypto analytics, weather data, persistent insights, feature flags, and AI-ready market summaries.
+[![Live](https://img.shields.io/badge/live-dashboard.ai--techart.com-16a34a?style=flat-square)](https://dashboard.ai-techart.com)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square)
+![React](https://img.shields.io/badge/React-19-149eca?style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square)
+![Redis Cache](https://img.shields.io/badge/Redis-cache%20%2B%20rate%20limit-dc2626?style=flat-square)
+![Security Headers](https://img.shields.io/badge/security-headers%20enabled-0f766e?style=flat-square)
+![Smoke Test](https://img.shields.io/badge/production%20smoke%20test-201%20checks-7c3aed?style=flat-square)
+
+Swiss Market Dashboard is a production-oriented fullstack data platform for Swiss market intelligence, crypto analytics, weather data, persistent market insights, Redis-backed caching, API observability, feature flags, and AI-ready market summary infrastructure.
 
 Live production URL:
 
+```txt
 https://dashboard.ai-techart.com
-
----
-
-## Overview
-
-Swiss Market Dashboard is a modern fullstack intelligence dashboard for crypto market data, Swiss weather information, persistent market insights, feature-controlled modules, Redis-backed caching, rate limiting, and AI-ready market analysis infrastructure.
-
-The project is intentionally built as a production-oriented platform rather than a minimal demo. It focuses on reliable data integration, clear user interfaces, secure server-side architecture, controlled rollout of cost-sensitive features, and maintainable fullstack engineering.
-
-Core platform capabilities include:
-
-- live market data integration
-- server-side API routes
-- persistent SQL storage
-- feature flag driven rollout control
-- AI Gateway integration prepared behind a kill switch
-- Redis-backed rate limiting and cache infrastructure
-- dependency security hygiene
-- Vercel production deployment
-
----
-
-## Core Features
-
-### Dashboard
-
-- Aggregated dashboard overview
-- Crypto market overview
-- Swiss weather overview
-- Modular navigation
-- Responsive UI
-
-### Crypto Market Data
-
-- Crypto listing
-- Coin detail pages
-- CoinGecko-powered market data
-- Price, market cap, volume, supply and ATH/ATL metrics
-- Chart modes:
-  - Area
-  - Line
-  - Candlestick
-- Server-side API routes for crypto data
-
-### Weather Data
-
-- Weather dashboard
-- Open-Meteo integration
-- Server-side weather API route
-
-### Market Intelligence Archive
-
-- Persistent insights stored in Neon Postgres
-- Drizzle ORM schema and migrations
-- `/insights` route
-- Seeded example records
-- Prepared for future AI-generated summaries
-
-### Feature Flags
-
-Feature flags are used to control experimental and cost-sensitive modules.
-
-Current flags:
-
-```env
-FEATURE_MARKET_INSIGHTS_ENABLED=true
-FEATURE_AI_MARKET_SUMMARY_ENABLED=false
-FEATURE_DEFAULT_CRYPTO_CHART_MODE=area
 ```
 
-Implemented flags:
+Repository:
 
-- `market-insights-enabled`
-- `ai-market-summary-enabled`
-- `default-crypto-chart-mode`
+```txt
+https://github.com/BlockShield-Systems/swiss-market-dashboard
+```
 
-### AI Market Summary Infrastructure
+---
 
-The project includes a server-side AI market summary API route:
+## What This Project Is
+
+Swiss Market Dashboard is built as a real fullstack system, not as a minimal UI prototype.
+
+The application combines:
+
+- server-rendered dashboard pages
+- public API routes
+- external data integrations
+- shared Redis-backed cached data services
+- SQL-backed persistent market insights
+- feature-flagged rollout control
+- rate-limited public APIs
+- production security headers
+- production smoke testing
+- documented architecture and security decisions
+- AI-ready infrastructure protected by a kill switch
+
+The current production deployment is intentionally conservative: cost-sensitive AI execution is implemented but disabled until provider billing and usage limits are deliberately configured.
+
+---
+
+## Live Capabilities
+
+### Dashboard Pages
+
+```txt
+/
+ /crypto
+ /crypto/[id]
+ /weather
+ /insights
+ /settings
+ /about
+```
+
+### Public API Routes
+
+```txt
+GET /api/crypto/global
+GET /api/weather?key=zurich
+GET /api/crypto/bitcoin/market-chart?days=7
+GET /api/crypto/bitcoin/ohlc?days=7
+```
+
+### AI-Ready API Route
 
 ```txt
 POST /api/ai/market-summary
@@ -95,41 +81,75 @@ Current production state:
 FEATURE_AI_MARKET_SUMMARY_ENABLED=false
 ```
 
-Reason:
+The AI route is implemented but intentionally disabled in production. This avoids uncontrolled model usage and keeps cost-sensitive execution behind an explicit rollout decision.
 
-The route is implemented but intentionally disabled in production to avoid uncontrolled AI credit usage. Vercel AI Gateway currently requires account billing verification before model requests can be processed.
+---
 
-Implemented AI infrastructure:
+## Core Features
 
-- Vercel AI Gateway integration
-- Request validation with Zod
-- CoinGecko context fetching
-- Prompt generation for German and English summaries
-- Postgres persistence for generated summaries
-- Redis-backed rate limiting
-- Redis-backed response caching
-- Feature flag kill switch
+### Market Dashboard
 
-### Redis Rate Limiting and Cache
+- aggregated market overview
+- crypto market overview
+- Swiss weather overview
+- responsive UI
+- locale-aware copy
+- resilient page-level fallback behavior
 
-Upstash Redis is integrated for:
+### Crypto Analytics
+
+- crypto market table
+- coin detail pages
+- price, market cap, volume and rank data
+- 24h and 7d change metrics
+- area, line and candlestick chart modes
+- market chart API
+- OHLC/candlestick API
+- CoinGecko-backed server-side integration
+
+### Swiss Weather Data
+
+- Swiss city weather module
+- Open-Meteo-backed forecast data
+- server-side weather API route
+- shared Redis-backed forecast cache
+
+### Market Insights Archive
+
+- persistent insights stored in Neon Postgres
+- Drizzle ORM schema and migrations
+- `/insights` route
+- source, model, confidence and metadata display
+- prepared for future AI-generated summaries
+
+### Feature Flags
+
+Feature flags control rollout and cost-sensitive behavior.
+
+```env
+FEATURE_MARKET_INSIGHTS_ENABLED=true
+FEATURE_AI_MARKET_SUMMARY_ENABLED=false
+FEATURE_DEFAULT_CRYPTO_CHART_MODE=area
+```
+
+Implemented flags:
+
+```txt
+market-insights-enabled
+ai-market-summary-enabled
+default-crypto-chart-mode
+```
+
+### Redis Cache and Rate Limiting
+
+Upstash Redis is used for:
 
 - shared cached data services
 - public API response caching
 - public API rate limiting
 - AI route rate limiting
-- AI response cache
-- short-lived operational counters
-- abuse-prevention infrastructure
-
-Shared cached data services are used by both server-rendered pages and public API routes:
-
-```txt
-src/lib/data/crypto-global.ts
-src/lib/data/weather-forecast.ts
-src/lib/data/coin-market-chart.ts
-src/lib/data/coin-ohlc-chart.ts
-```
+- AI response caching
+- short-lived operational state
 
 Current public cache TTLs:
 
@@ -147,103 +167,113 @@ Crypto market data APIs   60 requests / minute / client identifier
 General public APIs       120 requests / minute / client identifier
 ```
 
-Current AI limit:
-
-```txt
-5 requests / 10 minutes / client identifier
-```
-
-AI response cache TTL:
-
-```txt
-30 minutes
-```
+Client identifiers are derived from forwarded request headers and hashed before use.
 
 ---
 
 ## Tech Stack
 
-### Frontend
+### Application
 
-- Next.js App Router
-- React
-- TypeScript
-- Tailwind CSS
-- shadcn/ui-style components
-- Recharts
-- lightweight-charts
-- lucide-react
+```txt
+Next.js App Router
+React
+TypeScript
+Tailwind CSS
+shadcn-style UI components
+Recharts
+lightweight-charts
+lucide-react
+```
 
-### Backend / API
+### Backend and APIs
 
-- Next.js Route Handlers
-- Server-side TypeScript
-- Zod validation
-- CoinGecko API
-- Open-Meteo API
-- Vercel AI Gateway
+```txt
+Next.js Route Handlers
+Server-side TypeScript
+Zod validation
+CoinGecko API
+Open-Meteo API
+Vercel AI Gateway integration
+```
 
-### Database
+### Data and Persistence
 
-- Neon Postgres
-- Drizzle ORM
-- Drizzle Kit migrations
-- Drizzle Studio
+```txt
+Neon Postgres
+Drizzle ORM
+Drizzle Kit migrations
+Drizzle Studio
+```
 
-### Cache / Rate Limiting
+### Cache and Rate Limiting
 
-- Upstash Redis
-- `@upstash/redis`
-- `@upstash/ratelimit`
+```txt
+Upstash Redis
+@upstash/redis
+@upstash/ratelimit
+```
 
-### Deployment / Platform
+### Deployment and Runtime
 
-- Vercel
-- Vercel Environment Variables
-- Vercel Analytics
-- Vercel Speed Insights
-- Vercel Production Deployments
+```txt
+Vercel
+Vercel environment variables
+Vercel Analytics
+Vercel Speed Insights
+Production smoke test script
+```
 
-### Quality / Security
+### Quality and Security
 
-- TypeScript type checking
-- ESLint
-- Jest test suite
-- Production build validation
-- pnpm lockfile
-- pnpm supply-chain settings
-- Dependabot advisory resolution
+```txt
+TypeScript type checking
+ESLint
+Jest test suite
+Production build validation
+pnpm audit
+Security headers
+Content-Security-Policy
+Rate-limit headers
+Cache observability headers
+```
 
 ---
 
-## Architecture Summary
+## Architecture Overview
 
 ```txt
-Browser
+User Browser
   |
   v
-Next.js App Router
+Vercel Edge / CDN
   |
-  +--> Server Components / Client Components
+  v
+Next.js Application
   |
-  +--> Shared Cached Data Services
+  +-- App Router Pages
   |     |
-  |     +--> Upstash Redis cache
-  |     +--> CoinGecko API
-  |     +--> Open-Meteo API
+  |     +-- Shared Cached Data Services
   |
-  +--> API Routes
+  +-- Server Components
+  |
+  +-- Client Components
+  |
+  +-- Route Handlers
         |
-        +--> Shared Cached Data Services
-        +--> Neon Postgres via Drizzle ORM
-        +--> Upstash Redis rate limiting
-        +--> Vercel AI Gateway
+        +-- Shared Cached Data Services
+        +-- Neon Postgres via Drizzle ORM
+        +-- Upstash Redis cache and rate limiting
+        +-- Vercel AI Gateway integration
+
+Shared Cached Data Services
+  |
+  +-- Upstash Redis cache
+  +-- CoinGecko API
+  +-- Open-Meteo API
 ```
 
-The dashboard now uses shared cached data services for market and weather data.
-Both server-rendered pages and public API routes access the same Redis-backed data layer instead of duplicating external API fetch logic.
-
-Shared cached data services:
+The architecture avoids duplicated external API access. Server-rendered pages and public API routes use the same shared cached data service modules:
 
 ```txt
 src/lib/data/crypto-global.ts
@@ -252,13 +282,125 @@ src/lib/data/coin-market-chart.ts
 src/lib/data/coin-ohlc-chart.ts
 ```
 
-Detailed architecture documentation:
+Detailed documentation:
 
 ```txt
 docs/architecture.md
+docs/security.md
 ```
 
-Security posture:
+---
+
+## Public API Observability
+
+Public API responses expose standardized headers for cache state, upstream source, route identity and rate-limit state.
+
+```txt
+X-API-Route
+X-Data-Source
+X-Cache
+X-Cache-TTL
+X-Cache-Scope
+X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+X-RateLimit-Policy
+X-RateLimit-Window
+Cache-Control
+```
+
+Example:
+
+```bash
+curl -I https://dashboard.ai-techart.com/api/crypto/global
+```
+
+Expected relevant response headers:
+
+```txt
+X-API-Route: crypto-global
+X-Data-Source: coingecko
+X-Cache: HIT
+X-Cache-TTL: 60
+X-Cache-Scope: shared-data-service
+Cache-Control: no-store
+```
+
+These headers are designed for operational visibility and integration clarity. They do not expose secrets or raw client identifiers.
+
+---
+
+## Public API Examples
+
+### Crypto Global Data
+
+```bash
+curl https://dashboard.ai-techart.com/api/crypto/global
+```
+
+Returns normalized global crypto market data in CHF.
+
+### Weather Forecast
+
+```bash
+curl "https://dashboard.ai-techart.com/api/weather?key=zurich"
+```
+
+Supported city keys are defined in:
+
+```txt
+src/lib/types/weather.ts
+```
+
+### Bitcoin Market Chart
+
+```bash
+curl "https://dashboard.ai-techart.com/api/crypto/bitcoin/market-chart?days=7"
+```
+
+Supported day values:
+
+```txt
+7
+30
+90
+```
+
+Invalid values fall back to:
+
+```txt
+7
+```
+
+### Bitcoin OHLC Chart
+
+```bash
+curl "https://dashboard.ai-techart.com/api/crypto/bitcoin/ohlc?days=7"
+```
+
+---
+
+## Security Posture
+
+Implemented production security controls include:
+
+- Content-Security-Policy
+- Referrer-Policy
+- X-Content-Type-Options
+- X-Frame-Options
+- Permissions-Policy
+- Cross-Origin-Opener-Policy
+- Cross-Origin-Resource-Policy
+- Strict-Transport-Security
+- disabled framework powered-by header
+- no secrets in client-side code
+- Redis-backed rate limiting
+- hashed client identifiers for rate-limit keys
+- feature-flag kill switch for cost-sensitive AI execution
+- dependency audit workflow
+- production smoke test verification
+
+Security documentation:
 
 ```txt
 docs/security.md
@@ -266,63 +408,58 @@ docs/security.md
 
 ---
 
-## Environment Variables
+## Testing and Verification
 
-Required locally in `.env.local`.
+The project includes automated tests for:
 
-Never commit `.env.local`.
+- feature flags
+- request client identification
+- Redis client initialization
+- cache utilities
+- rate-limit headers
+- external API clients
+- cached data providers
+- public API validation safeguards
+- public API runtime behavior
+- market insights database queries
+- selected UI components
 
-### Public API / Market Data
+Primary quality commands:
 
-```env
-COINGECKO_API_KEY=...
+```bash
+pnpm type-check
+pnpm lint
+pnpm test:ci
+pnpm build
+pnpm audit
+pnpm audit --prod
 ```
 
-### Postgres / Neon
+Production smoke test:
 
-```env
-DATABASE_URL=...
-DATABASE_URL_UNPOOLED=...
+```bash
+pnpm smoke:prod
 ```
 
-Runtime uses:
+The production smoke test validates:
 
-```env
-DATABASE_URL
-```
+- key HTML routes
+- robots.txt
+- sitemap.xml
+- OpenGraph image
+- public API endpoints
+- response status codes
+- content types
+- security headers
+- public API observability headers
+- absence of the framework powered-by header
+- basic JSON response shapes
 
-Migrations use:
+Current production smoke test coverage:
 
-```env
-DATABASE_URL_UNPOOLED
-```
-
-### Feature Flags
-
-```env
-FEATURE_MARKET_INSIGHTS_ENABLED=true
-FEATURE_AI_MARKET_SUMMARY_ENABLED=false
-FEATURE_DEFAULT_CRYPTO_CHART_MODE=area
-```
-
-### AI Gateway
-
-```env
-AI_GATEWAY_API_KEY=...
-AI_MARKET_SUMMARY_MODEL=alibaba/qwen-3-14b
-```
-
-AI is currently disabled by default through:
-
-```env
-FEATURE_AI_MARKET_SUMMARY_ENABLED=false
-```
-
-### Upstash Redis
-
-```env
-UPSTASH_REDIS_REST_URL=...
-UPSTASH_REDIS_REST_TOKEN=...
+```txt
+201 checks
+0 expected failures
 ```
 
 ---
@@ -341,10 +478,19 @@ Start development server:
 pnpm dev
 ```
 
-Open:
+Open locally:
 
 ```txt
 http://localhost:3000
+```
+
+Run the main local quality gate:
+
+```bash
+pnpm type-check
+pnpm lint
+pnpm test:ci
+pnpm build
 ```
 
 ---
@@ -377,88 +523,198 @@ pnpm db:studio
 
 ---
 
-## Quality Checks
+## Environment Variables
 
-Run before every production commit:
+Required locally in `.env.local`.
 
-```bash
-pnpm type-check
-pnpm lint
-pnpm test:ci
-pnpm build
+Never commit `.env.local`.
+
+### CoinGecko
+
+```env
+COINGECKO_API_KEY=...
 ```
 
-Security audit:
+### Neon Postgres
 
-```bash
-pnpm audit
-pnpm audit --prod
+```env
+DATABASE_URL=...
+DATABASE_URL_UNPOOLED=...
+```
+
+Runtime uses:
+
+```env
+DATABASE_URL
+```
+
+Migrations use:
+
+```env
+DATABASE_URL_UNPOOLED
+```
+
+### Upstash Redis
+
+```env
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+```
+
+### Feature Flags
+
+```env
+FEATURE_MARKET_INSIGHTS_ENABLED=true
+FEATURE_AI_MARKET_SUMMARY_ENABLED=false
+FEATURE_DEFAULT_CRYPTO_CHART_MODE=area
+```
+
+### AI Gateway
+
+```env
+AI_GATEWAY_API_KEY=...
+AI_MARKET_SUMMARY_MODEL=alibaba/qwen-3-14b
+```
+
+AI execution is disabled by default through:
+
+```env
+FEATURE_AI_MARKET_SUMMARY_ENABLED=false
 ```
 
 ---
 
-## Current Production Status
+## Production Status
 
 Implemented and deployed:
 
-- Next.js dashboard
-- Crypto overview
-- Crypto detail pages
-- Weather module
-- Neon Postgres integration
-- Drizzle schema and migrations
-- Market Intelligence Archive
-- Feature flags
-- AI market summary API route
-- Redis rate limiting and cache infrastructure
-- Dependency security advisory fixes
+```txt
+Next.js dashboard
+Crypto overview
+Crypto detail pages
+Weather module
+Public API routes
+Neon Postgres integration
+Drizzle schema and migrations
+Market Insights Archive
+Feature flags
+AI market summary API route
+Redis cache infrastructure
+Redis rate limiting
+Public API observability headers
+Production security headers
+Production smoke test
+Expanded Jest test coverage
+```
 
-Disabled intentionally:
+Intentionally disabled:
 
-- Public AI market summary execution
+```txt
+Public AI market summary execution
+```
 
 Reason:
 
-- AI Gateway model execution is cost-sensitive.
-- The feature is protected by a feature flag.
-- Redis protection is implemented.
-- Production AI activation requires deliberate billing and cost-control approval.
+```txt
+AI execution is cost-sensitive.
+The route is implemented and protected.
+The feature remains behind a server-side kill switch.
+Activation requires deliberate billing, provider and usage-limit configuration.
+```
+
+---
+
+## Project Principles
+
+This project is guided by the following engineering principles:
+
+```txt
+Production behavior over mock-only behavior
+Explicit trade-offs over hidden assumptions
+Server-side secrets only
+Cost-sensitive features behind feature flags
+Shared data providers instead of duplicated fetch logic
+Observable API responses
+Redis as controlled cache layer
+No browser/CDN caching dependency for public JSON APIs
+Small deployable increments
+Quality gates before production changes
+```
+
+---
+
+## Documentation Map
+
+```txt
+README.md                       Project overview and operational entry point
+docs/architecture.md            System architecture and runtime flows
+docs/security.md                Security controls and production headers
+scripts/smoke-test-production.mjs Production smoke test runner
+```
+
+Recommended next documentation additions:
+
+```txt
+docs/case-study.md
+docs/openapi.yaml
+docs/operations.md
+docs/decisions/
+SECURITY.md
+CHANGELOG.md
+```
 
 ---
 
 ## Roadmap
 
-Potential next modules:
+Near-term improvements:
 
-- AI summary UI action on coin detail pages
-- Admin-only AI generation controls
-- Saved watchlist
-- User feedback on insights
-- Scheduled market reports
-- Premium access flows
-- Forum/community module
-- Workflow-based scheduled intelligence reports
-- Deeper observability and runtime dashboards
+```txt
+Architecture diagrams
+Engineering case study
+OpenAPI specification for public APIs
+Operations runbook
+Security policy and threat model
+Project changelog
+Optional accessibility audit documentation
+```
+
+Deferred intentionally:
+
+```txt
+Public AI UI action
+Authentication system
+Admin panel
+Sandbox
+Premium/user area
+```
+
+These features require a clearer product boundary and should not be added only for architectural complexity.
 
 ---
 
-## Project Focus
+## References
 
-This project demonstrates practical fullstack engineering through a real, data-driven dashboard architecture.
+Architecture:
 
-The focus is on:
+```txt
+docs/architecture.md
+```
 
-- reliable API integration
-- database modeling
-- migrations
-- persistent data
-- server-side feature flags
-- AI-ready infrastructure
-- cost control
-- rate limiting
-- caching
-- production deployment
-- dependency security hygiene
+Security:
 
-The dashboard is designed as a technical reference platform for users, developers, companies, technical decision-makers, and the wider Swiss/DACH technology ecosystem.
+```txt
+docs/security.md
+```
 
+Production smoke test:
+
+```txt
+scripts/smoke-test-production.mjs
+```
+
+Live deployment:
+
+```txt
+https://dashboard.ai-techart.com
+```
