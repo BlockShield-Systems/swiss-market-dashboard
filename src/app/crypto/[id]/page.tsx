@@ -181,19 +181,42 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
   const t = getDictionary(locale);
 
   let coin: CryptoCoinDetails;
-  let chartData: CryptoMarketChartPoint[];
-  let initialChartMode: CryptoChartMode;
+  let chartData: CryptoMarketChartPoint[] = [];
+  let initialChartMode: CryptoChartMode = "area";
+  let initialChartError: string | null = null;
 
   try {
-    const [coinDetails, chartResult, chartMode] = await Promise.all([
-      fetchCoinDetails(id),
-      getCachedCoinMarketChart(id, 7),
-      defaultCryptoChartMode(),
-    ]);
+    const [coinResult, chartResult, chartModeResult] =
+      await Promise.allSettled([
+        fetchCoinDetails(id),
+        getCachedCoinMarketChart(id, 7),
+        defaultCryptoChartMode(),
+      ]);
 
-    coin = coinDetails;
-    chartData = chartResult.data;
-    initialChartMode = chartMode;
+    if (coinResult.status === "rejected") {
+      throw coinResult.reason;
+    }
+
+    coin = coinResult.value;
+
+    if (chartResult.status === "fulfilled") {
+      chartData = chartResult.value.data;
+    } else {
+      console.error(
+        "Failed to load initial coin chart data:",
+        chartResult.reason,
+      );
+      initialChartError = t.crypto.detail.chartLoadError;
+    }
+
+    if (chartModeResult.status === "fulfilled") {
+      initialChartMode = chartModeResult.value;
+    } else {
+      console.error(
+        "Failed to resolve default crypto chart mode:",
+        chartModeResult.reason,
+      );
+    }
   } catch (err) {
     console.error("Failed to load coin detail page:", err);
 
@@ -316,6 +339,7 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
         initialData={chartData}
         initialDays={7}
         initialMode={initialChartMode}
+        initialError={initialChartError}
       />
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">

@@ -1,9 +1,9 @@
 import { CloudRain, Droplets, Thermometer, Wind } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchWeatherForecast } from "@/lib/api/openmeteo";
+import { getCachedWeatherForecast } from "@/lib/data/weather-forecast";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
-import type { SwissCity } from "@/lib/types/weather";
+import type { SwissCity, WeatherData } from "@/lib/types/weather";
 
 interface CurrentConditionsProps {
   city: SwissCity;
@@ -33,6 +33,17 @@ const WMO_ICONS: Record<number, string> = {
   99: "⛈️",
 };
 
+function hasDailyWeatherData(data: WeatherData) {
+  return (
+    data.daily.time.length > 0 &&
+    data.daily.weather_code.length > 0 &&
+    data.daily.temperature_2m_max.length > 0 &&
+    data.daily.temperature_2m_min.length > 0 &&
+    data.daily.precipitation_sum.length > 0 &&
+    data.daily.wind_speed_10m_max.length > 0
+  );
+}
+
 export async function CurrentConditions({ city }: CurrentConditionsProps) {
   const locale = await getLocale();
   const t = getDictionary(locale);
@@ -47,11 +58,18 @@ export async function CurrentConditions({ city }: CurrentConditionsProps) {
     },
   );
 
-  let data;
+  let data: WeatherData;
 
   try {
-    data = await fetchWeatherForecast(city);
-  } catch {
+    const result = await getCachedWeatherForecast(city);
+    data = result.data;
+
+    if (!hasDailyWeatherData(data)) {
+      throw new Error("Weather response does not contain daily forecast data.");
+    }
+  } catch (error) {
+    console.error("Failed to load current weather conditions:", error);
+
     return (
       <Card>
         <CardHeader>

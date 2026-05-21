@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
+  AlertTriangle,
   ArrowRight,
   Bot,
   Building2,
@@ -51,38 +52,83 @@ function formatMarketCapTrillionChf(value: number, locale: "de" | "en") {
   return locale === "de" ? `${formatted} Bio. CHF` : `${formatted} T CHF`;
 }
 
+function formatTemperature(value: number, locale: "de" | "en") {
+  return value.toLocaleString(locale === "de" ? "de-CH" : "en-CH", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
 
-  const [cryptoGlobalResult, zurichWeatherResult, showMarketInsights] =
-    await Promise.all([
+  const [cryptoGlobalResult, zurichWeatherResult, marketInsightsResult] =
+    await Promise.allSettled([
       getCachedCryptoGlobalData(),
       getCachedWeatherForecast(SWISS_CITIES[0]),
       marketInsightsEnabled(),
     ]);
 
-  const globalData = cryptoGlobalResult.data;
-  const zurichWeather = zurichWeatherResult.data;
+  if (cryptoGlobalResult.status === "rejected") {
+    console.error(
+      "Failed to load crypto global data for dashboard:",
+      cryptoGlobalResult.reason,
+    );
+  }
 
-  const maxTemp = zurichWeather.daily.temperature_2m_max[0];
-  const minTemp = zurichWeather.daily.temperature_2m_min[0];
+  if (zurichWeatherResult.status === "rejected") {
+    console.error(
+      "Failed to load Zurich weather data for dashboard:",
+      zurichWeatherResult.reason,
+    );
+  }
 
-  const formattedMaxTemp = maxTemp.toLocaleString(
-    locale === "de" ? "de-CH" : "en-CH",
-    {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    },
-  );
+  if (marketInsightsResult.status === "rejected") {
+    console.error(
+      "Failed to resolve market insights feature flag:",
+      marketInsightsResult.reason,
+    );
+  }
 
-  const formattedMinTemp = minTemp.toLocaleString(
-    locale === "de" ? "de-CH" : "en-CH",
-    {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    },
-  );
+  const globalData =
+    cryptoGlobalResult.status === "fulfilled"
+      ? cryptoGlobalResult.value.data
+      : null;
+
+  const zurichWeather =
+    zurichWeatherResult.status === "fulfilled"
+      ? zurichWeatherResult.value.data
+      : null;
+
+  const showMarketInsights =
+    marketInsightsResult.status === "fulfilled"
+      ? marketInsightsResult.value
+      : false;
+
+  const hasDataWarning = !globalData || !zurichWeather;
+
+  const maxTemp = zurichWeather?.daily.temperature_2m_max[0] ?? null;
+  const minTemp = zurichWeather?.daily.temperature_2m_min[0] ?? null;
+
+  const formattedMaxTemp =
+    typeof maxTemp === "number" ? formatTemperature(maxTemp, locale) : "–";
+
+  const formattedMinTemp =
+    typeof minTemp === "number" ? formatTemperature(minTemp, locale) : "–";
+
+  const resilienceCopy =
+    locale === "de"
+      ? {
+        title: "Daten temporär eingeschränkt",
+        description:
+          "Ein Teil der externen Markt- oder Wetterdaten konnte nicht geladen werden. Bereits zwischengespeicherte Daten werden weiterhin genutzt, sofern verfügbar.",
+      }
+      : {
+        title: "Data temporarily limited",
+        description:
+          "Some external market or weather data could not be loaded. Cached data continues to be used where available.",
+      };
 
   const insightsCopy =
     locale === "de"
@@ -124,32 +170,66 @@ export default async function HomePage() {
         </p>
       </div>
 
+      {hasDataWarning ? (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="size-4 text-amber-600" />
+              {resilienceCopy.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              {resilienceCopy.description}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title={t.home.stats.marketCap}
-          value={formatMarketCapTrillionChf(
-            globalData.total_market_cap_chf,
-            locale,
-          )}
+          value={
+            globalData
+              ? formatMarketCapTrillionChf(
+                globalData.total_market_cap_chf,
+                locale,
+              )
+              : "–"
+          }
           icon={<TrendingUp className="size-5" />}
-          description={t.home.statDescriptions.totalMarket}
+          description={
+            globalData ? t.home.statDescriptions.totalMarket : t.crypto.loadError
+          }
         />
 
         <StatsCard
           title={t.home.stats.activeCoins}
-          value={formatNumberByLocale(
-            globalData.active_cryptocurrencies,
-            locale,
-          )}
+          value={
+            globalData
+              ? formatNumberByLocale(
+                globalData.active_cryptocurrencies,
+                locale,
+              )
+              : "–"
+          }
           icon={<Globe className="size-5" />}
-          description={t.home.statDescriptions.listedOnCoinGecko}
+          description={
+            globalData
+              ? t.home.statDescriptions.listedOnCoinGecko
+              : t.crypto.loadError
+          }
         />
 
         <StatsCard
           title={t.home.stats.zurichToday}
-          value={`${formattedMaxTemp}°C`}
+          value={typeof maxTemp === "number" ? `${formattedMaxTemp}°C` : "–"}
           icon={<CloudSun className="size-5" />}
-          description={`${t.home.statDescriptions.minPrefix} ${formattedMinTemp}°C`}
+          description={
+            typeof minTemp === "number"
+              ? `${t.home.statDescriptions.minPrefix} ${formattedMinTemp}°C`
+              : t.weather.loadError
+          }
         />
 
         <StatsCard

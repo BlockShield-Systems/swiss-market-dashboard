@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Info } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 import { WeatherForecastChart } from "@/components/weather/weather-forecast-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCachedWeatherForecast } from "@/lib/data/weather-forecast";
@@ -21,9 +21,15 @@ export default async function WeatherPage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
 
-  const initialWeatherResult = await getCachedWeatherForecast(
-    DEFAULT_SWISS_CITY,
-  );
+  let initialWeatherResult:
+    | Awaited<ReturnType<typeof getCachedWeatherForecast>>
+    | null = null;
+
+  try {
+    initialWeatherResult = await getCachedWeatherForecast(DEFAULT_SWISS_CITY);
+  } catch (error) {
+    console.error("Failed to load initial weather forecast page data:", error);
+  }
 
   const legendItems = [
     t.weather.legend.temperature,
@@ -32,6 +38,19 @@ export default async function WeatherPage() {
     t.weather.legend.weatherCode,
     t.weather.legend.source,
   ];
+
+  const resilienceCopy =
+    locale === "de"
+      ? {
+        title: "Wetterdaten temporär nicht verfügbar",
+        description:
+          "Die Open-Meteo-Daten konnten aktuell nicht geladen werden. Bitte versuche es später erneut. Bereits zwischengespeicherte Daten werden weiterhin genutzt, sofern verfügbar.",
+      }
+      : {
+        title: "Weather data temporarily unavailable",
+        description:
+          "Open-Meteo data could not be loaded right now. Please try again later. Cached data continues to be used where available.",
+      };
 
   return (
     <div className="space-y-6">
@@ -77,7 +96,23 @@ export default async function WeatherPage() {
         </CardContent>
       </Card>
 
-      <WeatherForecastChart initialData={initialWeatherResult.data} />
+      {initialWeatherResult ? (
+        <WeatherForecastChart initialData={initialWeatherResult.data} />
+      ) : (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="size-4 text-destructive" />
+              {resilienceCopy.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              {resilienceCopy.description}
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

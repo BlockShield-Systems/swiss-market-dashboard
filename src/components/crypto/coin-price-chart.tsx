@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { AlertTriangle } from "lucide-react";
 import { CoinCandlestickChart } from "@/components/crypto/coin-candlestick-chart";
 import { usePreferences } from "@/components/preferences-provider";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ interface CoinPriceChartProps {
   initialData: CryptoMarketChartPoint[];
   initialDays?: CryptoChartDays;
   initialMode?: CryptoChartMode;
+  initialError?: string | null;
 }
 
 type ChartDataPoint = CryptoMarketChartPoint & {
@@ -106,11 +108,26 @@ function getChartModeLabel(
   return t.crypto.detail.chartModeCandlestick;
 }
 
+function isMarketChartData(value: unknown): value is CryptoMarketChartPoint[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (point) =>
+        typeof point === "object" &&
+        point !== null &&
+        typeof (point as CryptoMarketChartPoint).timestamp === "number" &&
+        typeof (point as CryptoMarketChartPoint).date === "string" &&
+        typeof (point as CryptoMarketChartPoint).price === "number",
+    )
+  );
+}
+
 export function CoinPriceChart({
   coinId,
   initialData,
   initialDays = 7,
   initialMode = "area",
+  initialError = null,
 }: CoinPriceChartProps) {
   const { locale } = usePreferences();
   const t = getDictionary(locale);
@@ -122,8 +139,8 @@ export function CoinPriceChart({
     useState<CryptoChartMode>(initialMode);
 
   const [data, setData] = useState<CryptoMarketChartPoint[]>(initialData);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(initialError);
+  const [isLoading, setIsLoading] = useState(false);
 
   const chartData = useMemo<ChartDataPoint[]>(
     () =>
@@ -135,38 +152,43 @@ export function CoinPriceChart({
     [data, locale],
   );
 
-  function handleRangeChange(days: CryptoChartDays) {
-    if (days === selectedDays || isPending) {
+  async function handleRangeChange(days: CryptoChartDays) {
+    if (days === selectedDays || isLoading) {
       return;
     }
 
     setError(null);
-    setSelectedDays(days);
+    setIsLoading(true);
 
-    startTransition(async () => {
-      try {
-        const response = await fetch(
-          `/api/crypto/${encodeURIComponent(coinId)}/market-chart?days=${days}`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
+    try {
+      const response = await fetch(
+        `/api/crypto/${encodeURIComponent(coinId)}/market-chart?days=${days}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
           },
-        );
+        },
+      );
 
-        if (!response.ok) {
-          throw new Error(`Market chart request failed: ${response.status}`);
-        }
-
-        const nextData = (await response.json()) as CryptoMarketChartPoint[];
-
-        setData(nextData);
-      } catch (fetchError) {
-        console.error("Failed to fetch market chart range:", fetchError);
-        setError(t.crypto.detail.chartLoadError);
+      if (!response.ok) {
+        throw new Error(`Market chart request failed: ${response.status}`);
       }
-    });
+
+      const nextData: unknown = await response.json();
+
+      if (!isMarketChartData(nextData)) {
+        throw new Error("Market chart response has an invalid shape.");
+      }
+
+      setData(nextData);
+      setSelectedDays(days);
+    } catch (fetchError) {
+      console.error("Failed to fetch market chart range:", fetchError);
+      setError(t.crypto.detail.chartLoadError);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const commonAxis = (
@@ -202,6 +224,15 @@ export function CoinPriceChart({
     </>
   );
 
+  const showNonCandlestickError =
+    Boolean(error) && selectedChartMode !== "candlestick";
+
+  const showNonCandlestickEmptyState =
+    !isLoading &&
+    !error &&
+    selectedChartMode !== "candlestick" &&
+    chartData.length === 0;
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-4">
@@ -222,8 +253,8 @@ export function CoinPriceChart({
                 type="button"
                 size="sm"
                 variant={selectedDays === days ? "default" : "outline"}
-                disabled={isPending}
-                onClick={() => handleRangeChange(days)}
+                disabled={isLoading}
+                onClick={() => void handleRangeChange(days)}
               >
                 {getRangeLabel(days, t)}
               </Button>
@@ -247,11 +278,16 @@ export function CoinPriceChart({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {error && selectedChartMode !== "candlestick" ? (
-          <p className="text-sm text-destructive">{error}</p>
+        {showNonCandlestickError ? (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          </div>
         ) : null}
 
-        {isPending && selectedChartMode !== "candlestick" ? (
+        {isLoading && selectedChartMode !== "candlestick" ? (
           <p className="text-sm text-muted-foreground">
             {t.crypto.detail.chartLoading}
           </p>
@@ -282,7 +318,13 @@ export function CoinPriceChart({
 
         {selectedChartMode === "candlestick" ? (
           <CoinCandlestickChart coinId={coinId} days={selectedDays} />
-        ) : (
+        ) : showNonCandlestickEmptyState ? (
+          <div className="flex min-h-80 items-center justify-center rounded-lg border bg-muted/20 p-6 text-center">
+            <p className="max-w-md text-sm text-muted-foreground">
+              {t.crypto.detail.chartLoadError}
+            </p>
+          </div>
+        ) : chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={380}>
             {selectedChartMode === "area" ? (
               <AreaChart
@@ -362,9 +404,9 @@ export function CoinPriceChart({
               </LineChart>
             )}
           </ResponsiveContainer>
-        )}
+        ) : null}
 
-        {selectedChartMode !== "candlestick" ? (
+        {selectedChartMode !== "candlestick" && chartData.length > 0 ? (
           <p className="text-xs text-muted-foreground">
             {t.crypto.detail.chartBrushHint}
           </p>
