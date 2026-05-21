@@ -266,6 +266,67 @@ Current public API data sources:
 
 ---
 
+## HTTP Security Headers
+
+The application sets production security headers through `next.config.ts`.
+
+Current global response headers:
+
+```txt
+Content-Security-Policy
+Referrer-Policy
+X-Content-Type-Options
+X-Frame-Options
+X-Permitted-Cross-Domain-Policies
+Cross-Origin-Opener-Policy
+Cross-Origin-Resource-Policy
+Permissions-Policy
+Strict-Transport-Security
+```
+
+Current Content Security Policy posture:
+
+```txt
+default-src 'self'
+base-uri 'self'
+form-action 'self'
+frame-ancestors 'none'
+object-src 'none'
+script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com
+style-src 'self' 'unsafe-inline'
+img-src 'self' data: blob: https://coin-images.coingecko.com
+font-src 'self' data:
+connect-src 'self' https://vitals.vercel-insights.com https://*.vercel-insights.com
+worker-src 'self' blob:
+manifest-src 'self'
+media-src 'self'
+upgrade-insecure-requests
+```
+
+Development builds additionally allow:
+
+```txt
+script-src 'unsafe-eval'
+```
+
+Reason:
+
+Next.js development tooling can require eval-like behavior during local development. Production does not include this directive.
+
+Security decisions:
+
+- framing is blocked through `frame-ancestors 'none'` and `X-Frame-Options: DENY`
+- MIME sniffing is blocked through `X-Content-Type-Options: nosniff`
+- browser referrer leakage is reduced through `strict-origin-when-cross-origin`
+- browser capabilities such as camera, microphone, geolocation, payment and USB are disabled
+- HTTPS is enforced through HSTS in production-capable deployments
+- Vercel Analytics and Speed Insights endpoints are explicitly allowed
+- CoinGecko image delivery is explicitly allowed for crypto asset images
+- inline scripts and styles are currently allowed for framework compatibility
+
+Future CSP hardening can replace `'unsafe-inline'` with a nonce-based policy. That should be implemented as a separate focused change because an incomplete nonce migration can break Next.js runtime behavior, analytics scripts or styling.
+---
+
 ## Dependency Security
 
 Dependency advisories are monitored through GitHub Dependabot and pnpm audit.
@@ -391,6 +452,7 @@ Potential future improvements:
 - bot protection tuning
 - structured runtime logging
 - Sentry or equivalent error reporting
-- security headers review
-- CSP hardening
+- CSP nonce-based hardening without 'unsafe-inline'
+- automated security header regression checks
 - automated dependency update workflow
+
