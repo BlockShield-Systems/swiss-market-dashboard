@@ -433,6 +433,7 @@ docs/architecture.md
 docs/architecture-diagrams.md
 docs/case-study.md
 docs/openapi.yaml
+docs/operations.md
 docs/security.md
 docs/feedback.md
 docs/project-evidence.md
@@ -441,7 +442,6 @@ docs/project-evidence.md
 Planned documentation additions:
 
 ```txt
-docs/operations.md
 docs/threat-model.md
 docs/decisions/
 SECURITY.md

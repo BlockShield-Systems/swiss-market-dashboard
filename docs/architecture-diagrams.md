@@ -446,7 +446,7 @@ flowchart LR
 
   Diagrams --> CaseStudy["docs/case-study.md"]
   Architecture --> OpenApi["docs/openapi.yaml"]
-  Evidence --> Operations["Future: docs/operations.md"]
+  Evidence --> Operations["docs/operations.md"]
 ```
 
 Documentation intent:
