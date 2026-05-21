@@ -27,6 +27,10 @@ const requiredPublicApiHeaders = [
   "cache-control",
 ];
 
+const forbiddenResponseHeaders = [
+  "x-powered-by",
+];
+
 let passedChecks = 0;
 let failedChecks = 0;
 
@@ -90,6 +94,15 @@ function assertHeaders(response, headers, label) {
   }
 }
 
+function assertForbiddenHeaders(response, headers, label) {
+  for (const header of headers) {
+    assert(
+      !response.headers.has(header),
+      `${label} does not expose forbidden header: ${header}`,
+    );
+  }
+}
+
 async function readJson(response, label) {
   try {
     return await response.json();
@@ -105,6 +118,7 @@ async function checkRoute({
   expectedStatus = 200,
   expectedContentTypes,
   requiredHeaders = [],
+  forbiddenHeaders = forbiddenResponseHeaders,
   validateJson,
 }) {
   const url = buildUrl(path);
@@ -135,6 +149,7 @@ async function checkRoute({
   }
 
   assertHeaders(response, requiredHeaders, label);
+  assertForbiddenHeaders(response, forbiddenHeaders, label);
 
   if (validateJson) {
     const json = await readJson(response, label);
