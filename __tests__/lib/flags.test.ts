@@ -1,4 +1,6 @@
-const ORIGINAL_ENV = process.env;
+export {};
+
+const FLAGS_TEST_ENV_SNAPSHOT = process.env;
 
 async function importFlagsWithEnvironment(
   values: Partial<{
@@ -10,7 +12,7 @@ async function importFlagsWithEnvironment(
   jest.resetModules();
 
   process.env = {
-    ...ORIGINAL_ENV,
+    ...FLAGS_TEST_ENV_SNAPSHOT,
   };
 
   for (const key of [
@@ -33,7 +35,7 @@ async function importFlagsWithEnvironment(
 }
 
 afterAll(() => {
-  process.env = ORIGINAL_ENV;
+  process.env = FLAGS_TEST_ENV_SNAPSHOT;
 });
 
 describe("feature flags", () => {
