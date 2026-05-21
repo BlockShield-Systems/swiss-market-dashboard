@@ -684,6 +684,7 @@ reproducible commands
 ```txt
 README.md                       Project overview and operational entry point
 docs/architecture.md            System architecture and runtime flows
+docs/architecture-diagrams.md   Visual architecture and runtime diagrams
 docs/security.md                Security controls and production headers
 docs/feedback.md                Public technical feedback guide
 docs/project-evidence.md        Objective verification and project evidence

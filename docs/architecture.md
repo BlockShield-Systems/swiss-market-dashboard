@@ -16,6 +16,30 @@ The architecture is designed around clear separation of responsibilities:
 
 ---
 
+## Architecture Diagrams
+
+Visual architecture diagrams are available in:
+
+```txt
+docs/architecture-diagrams.md
+```
+
+The diagram documentation covers:
+
+```txt
+System context
+Container architecture
+Public API request flow
+Shared cached data provider flow
+Cache and rate-limit header flow
+AI-ready route protection flow
+Database flow for market insights
+Production verification flow
+Security boundaries
+Documentation relationships
+```
+
+---
 ## High-Level System Overview
 
 ```txt
