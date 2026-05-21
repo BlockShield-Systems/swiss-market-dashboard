@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
 import { fetchCoinMarketChart } from "@/lib/api/coingecko";
+import {
+  createCacheHeaders,
+  getCachedJson,
+  mergeHeaders,
+  setCachedJson,
+} from "@/lib/cache";
+import {
+  createRateLimitHeaders,
+  getMarketDataRateLimit,
+} from "@/lib/public-api-rate-limit";
+import { getClientIdentifier } from "@/lib/request-ip";
 import type { CryptoChartDays } from "@/lib/types/crypto";
 
 interface MarketChartRouteContext {
@@ -9,6 +20,9 @@ interface MarketChartRouteContext {
 }
 
 const ALLOWED_DAYS: CryptoChartDays[] = [7, 30, 90];
+const CACHE_TTL_SECONDS = 60 * 5;
+
+type MarketChartResponse = Awaited<ReturnType<typeof fetchCoinMarketChart>>;
 
 function parseChartDays(value: string | null): CryptoChartDays {
   const parsed = Number(value ?? 7);
@@ -20,35 +34,102 @@ function parseChartDays(value: string | null): CryptoChartDays {
   return 7;
 }
 
+function buildCacheKey(id: string, days: CryptoChartDays) {
+  return `public-api:crypto:market-chart:${id.toLowerCase()}:${days}:v1`;
+}
+
 export async function GET(
   request: Request,
   { params }: MarketChartRouteContext,
 ) {
   const { id } = await params;
+  const normalizedId = id.trim().toLowerCase();
+
   const { searchParams } = new URL(request.url);
   const days = parseChartDays(searchParams.get("days"));
 
-  if (!id || id.trim().length === 0) {
+  if (!normalizedId) {
     return NextResponse.json(
       { error: "Missing coin id." },
       { status: 400 },
     );
   }
 
+  const cacheKey = buildCacheKey(normalizedId, days);
+  const cached = await getCachedJson<MarketChartResponse>(cacheKey);
+
+  if (cached.data) {
+    return NextResponse.json(cached.data, {
+      headers: createCacheHeaders({
+        cacheStatus: cached.status,
+        ttlSeconds: CACHE_TTL_SECONDS,
+      }),
+    });
+  }
+
+  let rateLimitHeaders: Headers | undefined;
+
   try {
-    const data = await fetchCoinMarketChart(id, days);
+    const identifier = getClientIdentifier(request);
+    const rateLimit = getMarketDataRateLimit();
+    const rateLimitResult = await rateLimit.limit(identifier);
+
+    rateLimitHeaders = createRateLimitHeaders(rateLimitResult);
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "Too many market data requests. Please try again later.",
+        },
+        {
+          status: 429,
+          headers: mergeHeaders(
+            createCacheHeaders({
+              cacheStatus: cached.status,
+              ttlSeconds: CACHE_TTL_SECONDS,
+            }),
+            rateLimitHeaders,
+          ),
+        },
+      );
+    }
+  } catch (error) {
+    console.warn("Market chart rate limit skipped:", error);
+  }
+
+  try {
+    const data = await fetchCoinMarketChart(normalizedId, days);
+
+    await setCachedJson({
+      key: cacheKey,
+      data,
+      ttlSeconds: CACHE_TTL_SECONDS,
+    });
 
     return NextResponse.json(data, {
-      headers: {
-        "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
-      },
+      headers: mergeHeaders(
+        createCacheHeaders({
+          cacheStatus: cached.status,
+          ttlSeconds: CACHE_TTL_SECONDS,
+        }),
+        rateLimitHeaders,
+      ),
     });
   } catch (error) {
     console.error("Failed to load coin market chart:", error);
 
     return NextResponse.json(
       { error: "Coin market chart could not be loaded." },
-      { status: 502 },
+      {
+        status: 502,
+        headers: mergeHeaders(
+          createCacheHeaders({
+            cacheStatus: cached.status,
+            ttlSeconds: CACHE_TTL_SECONDS,
+          }),
+          rateLimitHeaders,
+        ),
+      },
     );
   }
 }
