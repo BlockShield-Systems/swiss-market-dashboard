@@ -1,0 +1,12 @@
+packages:
+  - "."
+
+overrides:
+  postcss: "8.5.14"
+  esbuild: "0.25.0"
+
+allowBuilds:
+  esbuild: true
+  msw: true
+  sharp: true
+  unrs-resolver: true
