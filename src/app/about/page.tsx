@@ -54,23 +54,28 @@ type AboutContent = {
     openMeteoTitle: string;
     openMeteoText: string;
     securityAndCostControl: string;
-    securityAndCostControlText: string[];
+    securityAndCostControlItems: Array<{
+      title: string;
+      description: string;
+    }>;
     authorTitle: string;
     authorText: string;
     linksLabel: string;
+    badgeProduction: string;
+    badgePostgres: string;
+    badgeAi: string;
   };
 };
 
 const aboutContent: Record<Locale, AboutContent> = {
   de: {
     projectHighlights: [
-      "Next.js-based intelligence platform using the App Router and TypeScript",
-      "Multiple data domains: crypto markets, Swiss weather data and persistent market insights",
-      "Interactive crypto detail pages with area, line and real OHLC candlestick charts",
-      "Swiss weather dashboard with 7-day forecasts, daily cards, temperature, precipitation and wind visualizations",
-      "Production-oriented architecture with Neon Postgres, Drizzle ORM, Upstash Redis, feature flags, testing and Vercel deployment",
+      "Next.js-basierte Intelligence-Plattform mit App Router und TypeScript",
+      "Mehrere Datendomänen: Krypto-Märkte, Schweizer Wetterdaten und persistente Market Insights",
+      "Interaktive Krypto-Detailseiten mit Area-, Line- und echtem OHLC-Candlestick-Chart",
+      "Schweizer Wetterdashboard mit 7-Tage-Forecast, Tageskarten, Temperatur-, Niederschlags- und Windvisualisierung",
+      "Produktionsnahe Architektur mit Neon Postgres, Drizzle ORM, Upstash Redis, Feature Flags, Testing und Vercel Deployment",
     ],
-
     capabilityAreas: [
       {
         title: "Modern Web Development",
@@ -95,31 +100,31 @@ const aboutContent: Record<Locale, AboutContent> = {
     ],
     productionLayers: [
       {
-        title: "Postgres Data Layer",
+        title: "Postgres-Datenschicht",
         description:
           "Neon Postgres speichert persistente Market Intelligence Records. Drizzle ORM und migrationsbasierter Workflow machen die Datenschicht nachvollziehbar und erweiterbar.",
         icon: "database",
       },
       {
-        title: "Feature Flag Control",
+        title: "Feature-Flag-Steuerung",
         description:
           "Serverseitige Flags steuern das Insights-Modul, die AI Summary Route und den Standard-Chartmodus ohne Codeänderung oder riskanten Rollout.",
         icon: "flag",
       },
       {
-        title: "AI Gateway Prepared",
+        title: "Vorbereitete AI-Gateway-Anbindung",
         description:
           "Die AI Market Summary Route ist implementiert, validiert Requests mit Zod, baut strukturierte Prompts und persistiert zukünftige Ergebnisse in Postgres.",
         icon: "bot",
       },
       {
-        title: "Redis Cache & Rate Limits",
+        title: "Redis-Cache & Rate Limits",
         description:
           "Upstash Redis schützt externe APIs und AI-Flows durch Public API Caching, Rate Limits und Response Caching für teure Operationen.",
         icon: "redis",
       },
       {
-        title: "Security Hygiene",
+        title: "Security-Hygiene",
         description:
           "Secrets bleiben serverseitig, .env.local wird nicht committed, Dependency Advisories wurden bereinigt und Audit-Checks sind dokumentiert.",
         icon: "security",
@@ -132,14 +137,29 @@ const aboutContent: Record<Locale, AboutContent> = {
       },
     ],
     techStack: [
-      { category: "Framework", items: ["Next.js 16", "App Router", "Turbopack"] },
+      {
+        category: "Framework",
+        items: ["Next.js 16", "App Router", "Turbopack"],
+      },
       { category: "Sprache", items: ["TypeScript", "Strict Mode"] },
-      { category: "Styling", items: ["Tailwind CSS", "shadcn/ui-style Components"] },
+      {
+        category: "Styling",
+        items: ["Tailwind CSS", "shadcn/ui-style Components"],
+      },
       { category: "Charts", items: ["Recharts", "lightweight-charts"] },
       { category: "Tabellen", items: ["TanStack Table v8"] },
-      { category: "Datenbank", items: ["Neon Postgres", "Drizzle ORM", "Drizzle Kit"] },
-      { category: "Cache & Rate Limiting", items: ["Upstash Redis", "@upstash/redis", "@upstash/ratelimit"] },
-      { category: "AI-Infrastruktur", items: ["Vercel AI Gateway", "AI SDK", "Feature Flag Kill Switch"] },
+      {
+        category: "Datenbank",
+        items: ["Neon Postgres", "Drizzle ORM", "Drizzle Kit"],
+      },
+      {
+        category: "Cache & Rate Limiting",
+        items: ["Upstash Redis", "@upstash/redis", "@upstash/ratelimit"],
+      },
+      {
+        category: "AI-Infrastruktur",
+        items: ["Vercel AI Gateway", "AI SDK", "Feature Flag Kill Switch"],
+      },
       {
         category: "Testing",
         items: ["Jest", "React Testing Library", "Playwright-ready"],
@@ -174,7 +194,7 @@ const aboutContent: Record<Locale, AboutContent> = {
       projectAtGlance: "Projekt auf einen Blick",
       productionArchitecture: "Produktionsnahe Architektur",
       technicalPositioning: "Technische Einordnung",
-      brandContext: "Brand Context",
+      brandContext: "Markenkontext",
       techStack: "Tech Stack",
       techStackNote:
         'Für die tabellarische Darstellung kommt bewusst TanStack Table v8 zum Einsatz. Die Datei nutzt deshalb die Direktive "use no memo", um die bekannte React-Compiler-Inkompatibilität dieser Library-Version sauber zu behandeln, bis ein stabiler Migrationspfad auf eine spätere Version sinnvoll ist.',
@@ -185,16 +205,31 @@ const aboutContent: Record<Locale, AboutContent> = {
       openMeteoTitle: "Open-Meteo API",
       openMeteoText:
         "Nutzung für Schweizer Wetter- und Prognosedaten mit Fokus auf Temperatur, Niederschlag, Wind und Wetterzustände. Die Wetterroute nutzt Redis-Caching, da Wetterdaten nicht bei jedem Seitenaufruf neu geladen werden müssen.",
-      securityAndCostControl: "Security & Cost Control",
-      securityAndCostControlText: [
-        "Secrets werden ausschließlich serverseitig über Environment Variables verwendet. Lokale .env-Dateien sind vom Git-Tracking ausgeschlossen.",
-        "AI-Funktionalität ist bewusst hinter einem Feature Flag deaktiviert, bis Billing, Nutzungsgrenzen und Freigabe explizit entschieden sind.",
-        "Redis schützt API- und AI-Flows durch Rate Limiting und Caching. Dependency Advisories wurden über pnpm Overrides, Workspace-Konfiguration und Audit-Checks bereinigt.",
+      securityAndCostControl: "Sicherheit & Kostenkontrolle",
+      securityAndCostControlItems: [
+        {
+          title: "Secret Management",
+          description:
+            "Secrets werden ausschließlich serverseitig über Environment Variables verwendet. Lokale .env-Dateien sind vom Git-Tracking ausgeschlossen.",
+        },
+        {
+          title: "AI-Kostenkontrolle",
+          description:
+            "AI-Funktionalität ist bewusst hinter einem Feature Flag deaktiviert, bis Billing, Nutzungsgrenzen und Freigabe explizit entschieden sind.",
+        },
+        {
+          title: "Redis-Schutzschicht",
+          description:
+            "Redis schützt API- und AI-Flows durch Rate Limiting und Caching. Dependency Advisories wurden über pnpm Overrides, Workspace-Konfiguration und Audit-Checks bereinigt.",
+        },
       ],
       authorTitle: "Autor & Projektkontext",
       authorText:
         "Demian Lienert entwickelt das Swiss Market Dashboard als Teil des AI-Techart & Dynamics Ökosystems. Das Projekt verbindet moderne Webentwicklung, Datenintegration, AI-ready Infrastruktur und plattformorientiertes technisches Denken in einer öffentlich zugänglichen Anwendung.",
       linksLabel: "Weiterführende Links",
+      badgeProduction: "Produktionsnah",
+      badgePostgres: "Postgres-basiert",
+      badgeAi: "Kostenkontrollierte AI",
     },
   },
 
@@ -267,14 +302,29 @@ const aboutContent: Record<Locale, AboutContent> = {
       },
     ],
     techStack: [
-      { category: "Framework", items: ["Next.js 16", "App Router", "Turbopack"] },
+      {
+        category: "Framework",
+        items: ["Next.js 16", "App Router", "Turbopack"],
+      },
       { category: "Language", items: ["TypeScript", "Strict Mode"] },
-      { category: "Styling", items: ["Tailwind CSS", "shadcn/ui-style components"] },
+      {
+        category: "Styling",
+        items: ["Tailwind CSS", "shadcn/ui-style components"],
+      },
       { category: "Charts", items: ["Recharts", "lightweight-charts"] },
       { category: "Tables", items: ["TanStack Table v8"] },
-      { category: "Database", items: ["Neon Postgres", "Drizzle ORM", "Drizzle Kit"] },
-      { category: "Cache & Rate Limiting", items: ["Upstash Redis", "@upstash/redis", "@upstash/ratelimit"] },
-      { category: "AI Infrastructure", items: ["Vercel AI Gateway", "AI SDK", "Feature Flag Kill Switch"] },
+      {
+        category: "Database",
+        items: ["Neon Postgres", "Drizzle ORM", "Drizzle Kit"],
+      },
+      {
+        category: "Cache & Rate Limiting",
+        items: ["Upstash Redis", "@upstash/redis", "@upstash/ratelimit"],
+      },
+      {
+        category: "AI Infrastructure",
+        items: ["Vercel AI Gateway", "AI SDK", "Feature Flag Kill Switch"],
+      },
       {
         category: "Testing",
         items: ["Jest", "React Testing Library", "Playwright-ready"],
@@ -321,15 +371,30 @@ const aboutContent: Record<Locale, AboutContent> = {
       openMeteoText:
         "Used for Swiss weather and forecast data with focus on temperature, precipitation, wind and weather conditions. The weather route uses Redis caching because weather data does not need to be refetched on every page request.",
       securityAndCostControl: "Security & Cost Control",
-      securityAndCostControlText: [
-        "Secrets are used server-side only through environment variables. Local .env files are excluded from Git tracking.",
-        "AI functionality is intentionally disabled behind a feature flag until billing, usage limits and activation are explicitly approved.",
-        "Redis protects API and AI flows through rate limiting and caching. Dependency advisories were resolved using pnpm overrides, workspace configuration and audit checks.",
+      securityAndCostControlItems: [
+        {
+          title: "Secret Management",
+          description:
+            "Secrets are used server-side only through environment variables. Local .env files are excluded from Git tracking.",
+        },
+        {
+          title: "AI Cost Control",
+          description:
+            "AI functionality is intentionally disabled behind a feature flag until billing, usage limits and activation are explicitly approved.",
+        },
+        {
+          title: "Redis Protection Layer",
+          description:
+            "Redis protects API and AI flows through rate limiting and caching. Dependency advisories were resolved using pnpm overrides, workspace configuration and audit checks.",
+        },
       ],
       authorTitle: "Author & Project Context",
       authorText:
         "Demian Lienert develops the Swiss Market Dashboard as part of the AI-Techart & Dynamics ecosystem. The project combines modern web development, data integration, AI-ready infrastructure and platform-oriented technical thinking in a publicly accessible application.",
       linksLabel: "Further Links",
+      badgeProduction: "Production-oriented",
+      badgePostgres: "Postgres-backed",
+      badgeAi: "Cost-controlled AI",
     },
   },
 };
@@ -374,15 +439,15 @@ export default async function AboutPage() {
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary" className="gap-1">
             <Server className="size-3" />
-            Production-oriented
+            {content.sections.badgeProduction}
           </Badge>
           <Badge variant="outline" className="gap-1">
             <Database className="size-3" />
-            Postgres-backed
+            {content.sections.badgePostgres}
           </Badge>
           <Badge variant="outline" className="gap-1">
             <ShieldCheck className="size-3" />
-            Cost-controlled AI
+            {content.sections.badgeAi}
           </Badge>
         </div>
 
@@ -425,7 +490,10 @@ export default async function AboutPage() {
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {content.productionLayers.map((layer) => (
-            <div key={layer.title} className="rounded-xl border bg-background/70 p-4">
+            <div
+              key={layer.title}
+              className="rounded-xl border bg-background/70 p-4"
+            >
               <div className="flex items-center gap-2">
                 {getLayerIcon(layer.icon)}
                 <h2 className="text-sm font-semibold text-foreground">
@@ -552,14 +620,14 @@ export default async function AboutPage() {
           <CardTitle>{content.sections.securityAndCostControl}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
-          {content.sections.securityAndCostControlText.map((item) => (
-            <div key={item} className="rounded-xl border bg-muted/20 p-4">
+          {content.sections.securityAndCostControlItems.map((item) => (
+            <div key={item.title} className="rounded-xl border bg-muted/20 p-4">
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
                 <LockKeyhole className="size-4 text-primary" />
-                Control
+                {item.title}
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                {item}
+                {item.description}
               </p>
             </div>
           ))}

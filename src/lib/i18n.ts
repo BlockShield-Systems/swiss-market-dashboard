@@ -232,7 +232,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       about: {
         title: "Über das Dashboard",
         description:
-          "Technische Einordnung, Branding-Kontext und recruiter-taugliche Projektbeschreibung.",
+          "Technische Einordnung, Plattformarchitektur, Datenintegration und Sicherheitskonzept des Dashboards.",
       },
       settings: {
         title: "Einstellungen",
@@ -270,7 +270,8 @@ const dictionaries: Record<Locale, Dictionary> = {
       errorPrefix: "Fehler beim Laden der Krypto-Daten:",
       loadError: "Krypto-Daten konnten nicht geladen werden.",
       searchPlaceholder: "Nach Coin oder Symbol suchen",
-      noResults: "Keine Coins für die aktuelle Suche oder den aktiven Filter gefunden.",
+      noResults:
+        "Keine Coins für die aktuelle Suche oder den aktiven Filter gefunden.",
       marketShareTitle: "Krypto-Marktanteile",
       marketShareError: "Marktanteile konnten nicht geladen werden.",
       table: {
@@ -324,7 +325,8 @@ const dictionaries: Record<Locale, Dictionary> = {
         chartPriceInChf: "Preisverlauf in Schweizer Franken (CHF).",
         chartTimeframe: "Zeitraum",
         chartZoomHint: "Zoom / Scroll",
-        chartBrushHint: "Den unteren Schieberegler ziehen, um den sichtbaren Zeitraum einzugrenzen.",
+        chartBrushHint:
+          "Den unteren Schieberegler ziehen, um den sichtbaren Zeitraum einzugrenzen.",
         chartMode: "Chart-Typ",
         chartModeArea: "Fläche",
         chartModeLine: "Linie",
@@ -335,7 +337,8 @@ const dictionaries: Record<Locale, Dictionary> = {
           "Candlestick-Chart mit Maus ziehen, Mausrad zoomen oder Touch-Gesten bedienen. Charts bereitgestellt durch",
         chartOhlcLoading: "OHLC-Daten werden geladen …",
         chartOhlcLoadError: "OHLC-Daten konnten nicht geladen werden.",
-        chartOhlcNoData: "Keine OHLC-Daten für diesen Zeitraum verfügbar.",
+        chartOhlcNoData:
+          "Keine OHLC-Daten für diesen Zeitraum verfügbar.",
       },
       legend: {
         title: "Legende",
@@ -349,8 +352,7 @@ const dictionaries: Record<Locale, Dictionary> = {
           "24h zeigt die Preisveränderung innerhalb der letzten 24 Stunden.",
         change7d:
           "7d zeigt die Preisveränderung innerhalb der letzten sieben Tage.",
-        colors:
-          "Positive Werte werden grün dargestellt, negative Werte rot.",
+        colors: "Positive Werte werden grün dargestellt, negative Werte rot.",
       },
     },
     weather: {
@@ -419,8 +421,7 @@ const dictionaries: Record<Locale, Dictionary> = {
           "Temperatur zeigt tägliche Minimal- und Maximalwerte in Grad Celsius.",
         precipitation:
           "Niederschlag zeigt die erwartete Regen- oder Schneemenge in Millimetern pro Tag.",
-        wind:
-          "Wind zeigt die maximale Windgeschwindigkeit pro Tag in km/h.",
+        wind: "Wind zeigt die maximale Windgeschwindigkeit pro Tag in km/h.",
         weatherCode:
           "Wettercodes werden als verständliche Symbole und Kurzbeschreibungen dargestellt.",
         source:
@@ -498,7 +499,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       about: {
         title: "About the Dashboard",
         description:
-          "Technical positioning, brand context and recruiter-ready project framing.",
+          "Technical overview, platform architecture, data integration, and security posture of the dashboard.",
       },
       settings: {
         title: "Settings",
@@ -590,7 +591,8 @@ const dictionaries: Record<Locale, Dictionary> = {
         chartPriceInChf: "Price history in Swiss francs (CHF).",
         chartTimeframe: "Timeframe",
         chartZoomHint: "Zoom / scroll",
-        chartBrushHint: "Drag the lower range slider to narrow the visible timeframe.",
+        chartBrushHint:
+          "Drag the lower range slider to narrow the visible timeframe.",
         chartMode: "Chart type",
         chartModeArea: "Area",
         chartModeLine: "Line",
@@ -611,12 +613,9 @@ const dictionaries: Record<Locale, Dictionary> = {
           "Market cap describes the estimated total value of all circulating coins.",
         volume:
           "Volume shows the traded volume over the last 24 hours in CHF.",
-        change24h:
-          "24h shows the price change over the last 24 hours.",
-        change7d:
-          "7d shows the price change over the last seven days.",
-        colors:
-          "Positive values are shown in green, negative values in red.",
+        change24h: "24h shows the price change over the last 24 hours.",
+        change7d: "7d shows the price change over the last seven days.",
+        colors: "Positive values are shown in green, negative values in red.",
       },
     },
     weather: {
@@ -685,8 +684,7 @@ const dictionaries: Record<Locale, Dictionary> = {
           "Temperature shows daily minimum and maximum values in degrees Celsius.",
         precipitation:
           "Precipitation shows the expected rain or snow amount in millimeters per day.",
-        wind:
-          "Wind shows the maximum wind speed per day in km/h.",
+        wind: "Wind shows the maximum wind speed per day in km/h.",
         weatherCode:
           "Weather codes are translated into readable icons and short descriptions.",
         source:
@@ -710,8 +708,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       languageText:
         "Switches navigation, page headlines and explanatory content between German and English.",
       themeTitle: "Theme",
-      themeText:
-        "Controls the visual appearance across the entire dashboard.",
+      themeText: "Controls the visual appearance across the entire dashboard.",
       summaryTitle: "Summary",
       implementationNoteTitle: "Implementation Note",
       implementationNote:
