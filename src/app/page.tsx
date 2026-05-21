@@ -96,6 +96,7 @@ export default async function HomePage() {
         flagsDescription: "Kontrollierter Modul-Rollout",
         aiReady: "AI-ready",
         aiReadyDescription: "Gateway, Rate Limit und Cache vorbereitet",
+        productionLayer: "Produktionsnaher Layer",
       }
       : {
         eyebrow: "Market Intelligence",
@@ -109,6 +110,7 @@ export default async function HomePage() {
         flagsDescription: "Controlled module rollout",
         aiReady: "AI-ready",
         aiReadyDescription: "Gateway, rate limit and cache prepared",
+        productionLayer: "Production-oriented layer",
       };
 
   return (
@@ -157,7 +159,7 @@ export default async function HomePage() {
       </div>
 
       {showMarketInsights && (
-        <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background transition-shadow hover:shadow-md">
+        <Card className="overflow-hidden border-primary/20 bg-linear-to-br from-primary/5 via-background to-background transition-shadow hover:shadow-md">
           <CardHeader className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="gap-1">
@@ -166,7 +168,7 @@ export default async function HomePage() {
               </Badge>
               <Badge variant="outline" className="gap-1">
                 <ShieldCheck className="size-3" />
-                Production-ready layer
+                {insightsCopy.productionLayer}
               </Badge>
             </div>
 

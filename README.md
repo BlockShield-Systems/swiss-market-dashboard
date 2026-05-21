@@ -10,9 +10,11 @@ https://dashboard.ai-techart.com
 
 ## Overview
 
-Swiss Market Dashboard is a modern fullstack web application built to demonstrate production-grade platform engineering, API integration, persistent data storage, controlled feature rollout, and cost-aware AI infrastructure.
+Swiss Market Dashboard is a modern fullstack intelligence dashboard for crypto market data, Swiss weather information, persistent market insights, feature-controlled modules, Redis-backed caching, rate limiting, and AI-ready market analysis infrastructure.
 
-The project is intentionally not a minimal demo. It is designed as a portfolio-grade technical platform that showcases:
+The project is intentionally built as a production-oriented platform rather than a minimal demo. It focuses on reliable data integration, clear user interfaces, secure server-side architecture, controlled rollout of cost-sensitive features, and maintainable fullstack engineering.
+
+Core platform capabilities include:
 
 - live market data integration
 - server-side API routes
@@ -395,20 +397,23 @@ Potential next modules:
 
 ---
 
-## Portfolio Focus
+## Project Focus
 
-This project demonstrates practical fullstack engineering beyond a simple frontend demo:
+This project demonstrates practical fullstack engineering through a real, data-driven dashboard architecture.
 
-- API integration
+The focus is on:
+
+- reliable API integration
 - database modeling
 - migrations
 - persistent data
 - server-side feature flags
-- AI infrastructure
+- AI-ready infrastructure
 - cost control
 - rate limiting
 - caching
 - production deployment
 - dependency security hygiene
 
-It is built as a serious technical showcase for recruiters, developers, customers, CTOs, founders, and Swiss/DACH technology companies.
+The dashboard is designed as a technical reference platform for users, developers, companies, technical decision-makers, and the wider Swiss/DACH technology ecosystem.
+

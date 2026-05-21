@@ -1,6 +1,8 @@
 # Architecture
 
-Swiss Market Dashboard is structured as a production-oriented fullstack platform built on Next.js, Vercel, Neon Postgres, Upstash Redis, and Vercel AI Gateway.
+Swiss Market Dashboard is structured as a production-oriented fullstack intelligence platform built on Next.js, Vercel, Neon Postgres, Upstash Redis, and Vercel AI Gateway.
+
+The platform combines crypto market data, Swiss weather information, persistent market insights, Redis-backed caching, rate limiting, feature flags, and AI-ready market analysis infrastructure.
 
 The architecture is designed around clear separation of responsibilities:
 
@@ -98,7 +100,7 @@ Responsibilities:
 - isolate API keys from the browser
 - apply validation
 - support feature flags
-- prepare caching and rate limiting
+- apply Redis-backed caching and rate limiting where appropriate
 - return stable JSON contracts to the frontend
 
 ---
@@ -154,7 +156,7 @@ Purpose:
 - store manually seeded market insights
 - store future AI-generated crypto summaries
 - support historical intelligence records
-- provide a database-backed portfolio feature
+- provide a persistent intelligence archive backed by SQL storage
 
 ---
 
@@ -319,17 +321,21 @@ en
 
 Upstash Redis is used for:
 
-- AI rate limiting
+- public API response caching
+- public API rate limiting
+- AI route rate limiting
 - AI response caching
-- future API counters
-- future abuse prevention
+- short-lived operational counters
+- abuse-prevention infrastructure
 
 Files:
 
 ```txt
 src/lib/redis.ts
 src/lib/rate-limit.ts
+src/lib/public-api-rate-limit.ts
 src/lib/request-ip.ts
+src/lib/cache.ts
 ```
 
 Current rate limit:
@@ -348,6 +354,20 @@ Cache key format:
 
 ```txt
 ai-summary:{locale}:{coinId}
+```
+
+```txt
+/api/crypto/global              60 seconds
+/api/crypto/[id]/market-chart   300 seconds
+/api/crypto/[id]/ohlc           300 seconds
+/api/weather                    1800 seconds
+```
+
+Public API rate limits:
+
+```txt
+Crypto market data APIs   60 requests / minute / client identifier
+General public APIs       120 requests / minute / client identifier
 ```
 
 Client identifiers are derived from forwarded IP headers and hashed before use.

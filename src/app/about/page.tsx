@@ -1,6 +1,16 @@
 import Image from "next/image";
 import type { Metadata } from "next";
-import { ExternalLink } from "lucide-react";
+import {
+  Bot,
+  Database,
+  ExternalLink,
+  Flag,
+  Gauge,
+  GitBranch,
+  LockKeyhole,
+  Server,
+  ShieldCheck,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDictionary, type Locale } from "@/lib/i18n";
@@ -15,6 +25,11 @@ type AboutContent = {
     title: string;
     description: string;
   }>;
+  productionLayers: Array<{
+    title: string;
+    description: string;
+    icon: "database" | "flag" | "bot" | "redis" | "security" | "deployment";
+  }>;
   techStack: Array<{
     category: string;
     items: string[];
@@ -28,6 +43,7 @@ type AboutContent = {
     projectProfile: string;
     projectProfileText: string[];
     projectAtGlance: string;
+    productionArchitecture: string;
     technicalPositioning: string;
     brandContext: string;
     techStack: string;
@@ -37,6 +53,8 @@ type AboutContent = {
     coinGeckoText: string;
     openMeteoTitle: string;
     openMeteoText: string;
+    securityAndCostControl: string;
+    securityAndCostControlText: string[];
     authorTitle: string;
     authorText: string;
     linksLabel: string;
@@ -46,32 +64,71 @@ type AboutContent = {
 const aboutContent: Record<Locale, AboutContent> = {
   de: {
     projectHighlights: [
-      "Next.js-basierte Referenzanwendung mit App Router und TypeScript",
-      "Zwei unterschiedliche Datendomänen: Krypto-Märkte und Schweizer Wetterdaten",
-      "Interaktive Krypto-Detailseiten mit Area-, Line- und echtem OHLC-Candlestick-Chart",
-      "Schweizer Wetterdashboard mit 7-Tage-Forecast, Tageskarten, Temperatur-, Niederschlags- und Windvisualisierung",
-      "Responsives Interface mit Theme-Support, i18n, Testing und Vercel Deployment",
+      "Next.js-based intelligence platform using the App Router and TypeScript",
+      "Multiple data domains: crypto markets, Swiss weather data and persistent market insights",
+      "Interactive crypto detail pages with area, line and real OHLC candlestick charts",
+      "Swiss weather dashboard with 7-day forecasts, daily cards, temperature, precipitation and wind visualizations",
+      "Production-oriented architecture with Neon Postgres, Drizzle ORM, Upstash Redis, feature flags, testing and Vercel deployment",
     ],
+
     capabilityAreas: [
       {
         title: "Modern Web Development",
         description:
-          "Strukturierte Frontend-Entwicklung mit Fokus auf Lesbarkeit, Wartbarkeit, modularen Komponenten und produktionsnaher Umsetzung.",
+          "Strukturierte Webentwicklung mit Fokus auf Lesbarkeit, Wartbarkeit, modularen Komponenten, klarer Nutzerführung und produktionsnaher Umsetzung.",
       },
       {
-        title: "AI Workflow Systems",
+        title: "Data Integration & Intelligence",
         description:
-          "Technisches Denken in Workflows, Datenflüssen und schrittweiser Verarbeitung – nicht nur in isolierten Komponenten, sondern auf Systemebene.",
+          "Integration heterogener Datenquellen und Übersetzung von Markt-, Wetter- und Insight-Daten in verständliche, performante Benutzeroberflächen.",
       },
       {
-        title: "Data Integration & UI Architecture",
+        title: "Platform Architecture",
         description:
-          "Verarbeitung heterogener externer Datenquellen und Übersetzung in klare, verständliche und performante Benutzeroberflächen.",
+          "Serverseitige API-Routen, persistente Datenhaltung, Redis-Caching, Rate Limiting, Feature Flags und kontrollierte Deployment-Prozesse als zusammenhängende Plattformarchitektur.",
       },
       {
-        title: "Platform & Infrastructure Thinking",
+        title: "AI-ready Systems",
         description:
-          "Praxisorientierter Blick auf Delivery, Integrationen, Betriebsnähe und technische Kohärenz über das Frontend hinaus.",
+          "Vorbereitete AI-Infrastruktur mit Gateway-Anbindung, Kostenkontrolle, Feature-Flag-Schutz, Rate Limiting und Response-Caching – bewusst deaktiviert, bis Betrieb und Kostenrahmen freigegeben sind.",
+      },
+    ],
+    productionLayers: [
+      {
+        title: "Postgres Data Layer",
+        description:
+          "Neon Postgres speichert persistente Market Intelligence Records. Drizzle ORM und migrationsbasierter Workflow machen die Datenschicht nachvollziehbar und erweiterbar.",
+        icon: "database",
+      },
+      {
+        title: "Feature Flag Control",
+        description:
+          "Serverseitige Flags steuern das Insights-Modul, die AI Summary Route und den Standard-Chartmodus ohne Codeänderung oder riskanten Rollout.",
+        icon: "flag",
+      },
+      {
+        title: "AI Gateway Prepared",
+        description:
+          "Die AI Market Summary Route ist implementiert, validiert Requests mit Zod, baut strukturierte Prompts und persistiert zukünftige Ergebnisse in Postgres.",
+        icon: "bot",
+      },
+      {
+        title: "Redis Cache & Rate Limits",
+        description:
+          "Upstash Redis schützt externe APIs und AI-Flows durch Public API Caching, Rate Limits und Response Caching für teure Operationen.",
+        icon: "redis",
+      },
+      {
+        title: "Security Hygiene",
+        description:
+          "Secrets bleiben serverseitig, .env.local wird nicht committed, Dependency Advisories wurden bereinigt und Audit-Checks sind dokumentiert.",
+        icon: "security",
+      },
+      {
+        title: "Production Deployment",
+        description:
+          "Vercel liefert Production Deployments, Domains, Runtime Logs, Analytics, Speed Insights und kontrollierte Environment Variables.",
+        icon: "deployment",
       },
     ],
     techStack: [
@@ -80,6 +137,9 @@ const aboutContent: Record<Locale, AboutContent> = {
       { category: "Styling", items: ["Tailwind CSS", "shadcn/ui-style Components"] },
       { category: "Charts", items: ["Recharts", "lightweight-charts"] },
       { category: "Tabellen", items: ["TanStack Table v8"] },
+      { category: "Datenbank", items: ["Neon Postgres", "Drizzle ORM", "Drizzle Kit"] },
+      { category: "Cache & Rate Limiting", items: ["Upstash Redis", "@upstash/redis", "@upstash/ratelimit"] },
+      { category: "AI-Infrastruktur", items: ["Vercel AI Gateway", "AI SDK", "Feature Flag Kill Switch"] },
       {
         category: "Testing",
         items: ["Jest", "React Testing Library", "Playwright-ready"],
@@ -94,24 +154,25 @@ const aboutContent: Record<Locale, AboutContent> = {
       {
         name: "AI-Techart & Dynamics",
         description:
-          "Primäre technische Marke für moderne Webentwicklung, AI-Workflows und digitale Systeme.",
+          "Technische Marke für moderne Webentwicklung, AI-Workflows, datengetriebene Interfaces und digitale Plattformen.",
         image: "/branding/ai-techart.webp",
       },
       {
         name: "BlockShield Systems",
         description:
-          "Technisch ausgerichteter Teil des öffentlichen Markenökosystems mit Fokus auf Struktur, Systemdenken und belastbare Delivery.",
+          "Technisch ausgerichteter Teil des öffentlichen Markenökosystems mit Fokus auf Struktur, Systemdenken, robuste Umsetzung und nachvollziehbare Delivery.",
         image: "/branding/blockshield.webp",
       },
     ],
     sections: {
       projectProfile: "Projektprofil",
       projectProfileText: [
-        "Das Swiss Market Dashboard ist eine technische Referenzanwendung, die reale Frontend-Kompetenz nicht über statische Präsentation, sondern über ein funktionales, datengetriebenes Produkt sichtbar macht.",
-        "Der Schwerpunkt liegt auf der strukturierten Umsetzung moderner Benutzeroberflächen, der Verarbeitung externer Datenquellen und einer Architektur, die auch im produktionsnahen Kontext nachvollziehbar bleibt.",
-        "Inhaltlich verbindet die Anwendung zwei unterschiedliche Datendomänen: tabellarische Kryptomarktdaten sowie visuelle Wetter- und Zeitreihendaten für die Schweiz. Diese Kombination ist bewusst gewählt, um den Umgang mit unterschiedlichen Datenstrukturen, UI-Mustern und Präsentationslogiken zu demonstrieren.",
+        "Das Swiss Market Dashboard ist ein produktionsnahes Intelligence Dashboard innerhalb des AI-Techart & Dynamics Ökosystems. Es kombiniert Kryptowährungsdaten, Schweizer Wetterinformationen, persistente Market Insights, Feature Flags, Redis-Caching und eine vorbereitete AI-Analyse-Infrastruktur zu einer modernen, erweiterbaren Plattform.",
+        "Der Schwerpunkt liegt auf klarer Datenintegration, stabilen serverseitigen APIs, nachvollziehbarer Plattformarchitektur und einer Benutzeroberfläche, die komplexe externe Daten verständlich aufbereitet.",
+        "Die Anwendung verbindet bewusst unterschiedliche Datendomänen: tabellarische Kryptomarktdaten, visuelle Wetter- und Zeitreihendaten sowie persistente Marktinformationen aus einer SQL-Datenbank. Dadurch entsteht eine belastbare Grundlage für weitere Module wie Watchlists, Admin-Funktionen, AI-generierte Analysen oder geschützte Premium-Bereiche.",
       ],
       projectAtGlance: "Projekt auf einen Blick",
+      productionArchitecture: "Produktionsnahe Architektur",
       technicalPositioning: "Technische Einordnung",
       brandContext: "Brand Context",
       techStack: "Tech Stack",
@@ -120,45 +181,89 @@ const aboutContent: Record<Locale, AboutContent> = {
       dataSources: "Datenquellen",
       coinGeckoTitle: "CoinGecko API",
       coinGeckoText:
-        "Nutzung für aktuelle Kryptomarktdaten, Rankings, Preisentwicklungen, Marktkapitalisierung, historische Zeitreihen und echte OHLC-Daten. Im Dashboard werden diese Daten in Tabellen, Kennzahlen, Detailansichten und interaktive Chart-Modi übersetzt.",
+        "Nutzung für aktuelle Kryptomarktdaten, Rankings, Preisentwicklungen, Marktkapitalisierung, historische Zeitreihen und echte OHLC-Daten. Die öffentlichen Datenrouten werden zusätzlich über Redis gecacht und rate-limited, um externe API-Last und unnötige Requests zu reduzieren.",
       openMeteoTitle: "Open-Meteo API",
       openMeteoText:
-        "Nutzung für Schweizer Wetter- und Prognosedaten mit Fokus auf Temperatur, Niederschlag, Wind und Wetterzustände. Diese Daten werden als Tagesübersicht, Forecast-Karten und Zeitreihenvisualisierungen aufbereitet.",
-      authorTitle: "Autor & öffentliche Einordnung",
+        "Nutzung für Schweizer Wetter- und Prognosedaten mit Fokus auf Temperatur, Niederschlag, Wind und Wetterzustände. Die Wetterroute nutzt Redis-Caching, da Wetterdaten nicht bei jedem Seitenaufruf neu geladen werden müssen.",
+      securityAndCostControl: "Security & Cost Control",
+      securityAndCostControlText: [
+        "Secrets werden ausschließlich serverseitig über Environment Variables verwendet. Lokale .env-Dateien sind vom Git-Tracking ausgeschlossen.",
+        "AI-Funktionalität ist bewusst hinter einem Feature Flag deaktiviert, bis Billing, Nutzungsgrenzen und Freigabe explizit entschieden sind.",
+        "Redis schützt API- und AI-Flows durch Rate Limiting und Caching. Dependency Advisories wurden über pnpm Overrides, Workspace-Konfiguration und Audit-Checks bereinigt.",
+      ],
+      authorTitle: "Autor & Projektkontext",
       authorText:
-        "Demian Lienert positioniert sich öffentlich an der Schnittstelle von moderner Webentwicklung, AI-Workflows, visuellen Systemen und plattformorientiertem technischem Denken. Dieses Dashboard dient als nachvollziehbarer Praxisnachweis innerhalb dieses Profils.",
+        "Demian Lienert entwickelt das Swiss Market Dashboard als Teil des AI-Techart & Dynamics Ökosystems. Das Projekt verbindet moderne Webentwicklung, Datenintegration, AI-ready Infrastruktur und plattformorientiertes technisches Denken in einer öffentlich zugänglichen Anwendung.",
       linksLabel: "Weiterführende Links",
     },
   },
 
   en: {
     projectHighlights: [
-      "Next.js-based reference application using the App Router and TypeScript",
-      "Two distinct data domains: crypto markets and Swiss weather data",
+      "Next.js-based intelligence platform using the App Router and TypeScript",
+      "Multiple data domains: crypto markets, Swiss weather data and persistent market insights",
       "Interactive crypto detail pages with area, line and real OHLC candlestick charts",
       "Swiss weather dashboard with 7-day forecasts, daily cards, temperature, precipitation and wind visualizations",
-      "Responsive interface with theme support, i18n, testing and Vercel deployment",
+      "Production-oriented architecture with Neon Postgres, Drizzle ORM, Upstash Redis, feature flags, testing and Vercel deployment",
     ],
     capabilityAreas: [
       {
         title: "Modern Web Development",
         description:
-          "Structured frontend development focused on readability, maintainability, modular components and production-oriented delivery.",
+          "Structured web development focused on readability, maintainability, modular components, clear user experience and production-oriented delivery.",
       },
       {
-        title: "AI Workflow Systems",
+        title: "Data Integration & Intelligence",
         description:
-          "Technical thinking in workflows, data flows and step-based processing — not only at component level, but at system level.",
+          "Integration of heterogeneous data sources and translation of market, weather and insight data into clear, performant user interfaces.",
       },
       {
-        title: "Data Integration & UI Architecture",
+        title: "Platform Architecture",
         description:
-          "Processing heterogeneous external data sources and translating them into clear, understandable and performant user interfaces.",
+          "Server-side API routes, persistent storage, Redis caching, rate limiting, feature flags and controlled deployment workflows as one coherent platform architecture.",
       },
       {
-        title: "Platform & Infrastructure Thinking",
+        title: "AI-ready Systems",
         description:
-          "A practical view on delivery, integrations, operational awareness and technical coherence beyond the frontend itself.",
+          "Prepared AI infrastructure with gateway integration, cost control, feature-flag protection, rate limiting and response caching — intentionally disabled until operations and cost limits are approved.",
+      },
+    ],
+    productionLayers: [
+      {
+        title: "Postgres Data Layer",
+        description:
+          "Neon Postgres stores persistent market intelligence records. Drizzle ORM and migration-based workflows make the data layer explainable and extensible.",
+        icon: "database",
+      },
+      {
+        title: "Feature Flag Control",
+        description:
+          "Server-side flags control the insights module, the AI summary route and the default chart mode without code changes or risky rollout.",
+        icon: "flag",
+      },
+      {
+        title: "AI Gateway Prepared",
+        description:
+          "The AI market summary route is implemented, validates requests with Zod, builds structured prompts and persists future results in Postgres.",
+        icon: "bot",
+      },
+      {
+        title: "Redis Cache & Rate Limits",
+        description:
+          "Upstash Redis protects external APIs and AI flows through public API caching, rate limits and response caching for expensive operations.",
+        icon: "redis",
+      },
+      {
+        title: "Security Hygiene",
+        description:
+          "Secrets remain server-side, .env.local is not committed, dependency advisories were resolved and audit checks are documented.",
+        icon: "security",
+      },
+      {
+        title: "Production Deployment",
+        description:
+          "Vercel provides production deployments, domains, runtime logs, analytics, speed insights and controlled environment variables.",
+        icon: "deployment",
       },
     ],
     techStack: [
@@ -167,6 +272,9 @@ const aboutContent: Record<Locale, AboutContent> = {
       { category: "Styling", items: ["Tailwind CSS", "shadcn/ui-style components"] },
       { category: "Charts", items: ["Recharts", "lightweight-charts"] },
       { category: "Tables", items: ["TanStack Table v8"] },
+      { category: "Database", items: ["Neon Postgres", "Drizzle ORM", "Drizzle Kit"] },
+      { category: "Cache & Rate Limiting", items: ["Upstash Redis", "@upstash/redis", "@upstash/ratelimit"] },
+      { category: "AI Infrastructure", items: ["Vercel AI Gateway", "AI SDK", "Feature Flag Kill Switch"] },
       {
         category: "Testing",
         items: ["Jest", "React Testing Library", "Playwright-ready"],
@@ -181,24 +289,25 @@ const aboutContent: Record<Locale, AboutContent> = {
       {
         name: "AI-Techart & Dynamics",
         description:
-          "Primary technical brand focused on modern web development, AI workflows and digital systems.",
+          "Technical brand focused on modern web development, AI workflows, data-driven interfaces and digital platforms.",
         image: "/branding/ai-techart.webp",
       },
       {
         name: "BlockShield Systems",
         description:
-          "Technically focused part of the public brand ecosystem with emphasis on structure, systems thinking and solid delivery.",
+          "Technically focused part of the public brand ecosystem with emphasis on structure, systems thinking, robust implementation and transparent delivery.",
         image: "/branding/blockshield.webp",
       },
     ],
     sections: {
       projectProfile: "Project Profile",
       projectProfileText: [
-        "The Swiss Market Dashboard is a technical reference application designed to demonstrate real frontend capability through a functional, data-driven product rather than a static presentation.",
-        "Its focus lies in the structured implementation of modern user interfaces, external data integration and an architecture that remains understandable in production-oriented contexts.",
-        "The application intentionally combines two different data domains: tabular crypto market data and visual weather/time-series data for Switzerland. This combination highlights the ability to work with different data structures, UI patterns and presentation logics.",
+        "Swiss Market Dashboard is a production-oriented intelligence dashboard within the AI-Techart & Dynamics ecosystem. It combines crypto market data, Swiss weather information, persistent market insights, feature flags, Redis caching and prepared AI analysis infrastructure into a modern, extensible platform.",
+        "The focus is on clear data integration, stable server-side APIs, understandable platform architecture and a user interface that turns complex external data into accessible information.",
+        "The application intentionally combines different data domains: tabular crypto market data, visual weather and time-series data, and persistent market intelligence stored in a SQL database. This creates a solid foundation for future modules such as watchlists, admin controls, AI-generated analysis or protected premium areas.",
       ],
       projectAtGlance: "Project at a Glance",
+      productionArchitecture: "Production-Oriented Architecture",
       technicalPositioning: "Technical Positioning",
       brandContext: "Brand Context",
       techStack: "Tech Stack",
@@ -207,17 +316,42 @@ const aboutContent: Record<Locale, AboutContent> = {
       dataSources: "Data Sources",
       coinGeckoTitle: "CoinGecko API",
       coinGeckoText:
-        "Used for live crypto market data, rankings, price performance, market capitalization, historical time series and real OHLC data. Within the dashboard, the data is translated into tables, metrics, detail views and interactive chart modes.",
+        "Used for live crypto market data, rankings, price performance, market capitalization, historical time series and real OHLC data. Public data routes are additionally cached and rate-limited through Redis to reduce external API load and unnecessary requests.",
       openMeteoTitle: "Open-Meteo API",
       openMeteoText:
-        "Used for Swiss weather and forecast data with focus on temperature, precipitation, wind and weather conditions. The data is prepared as daily summaries, forecast cards and time-series visualizations.",
-      authorTitle: "Author & Public Positioning",
+        "Used for Swiss weather and forecast data with focus on temperature, precipitation, wind and weather conditions. The weather route uses Redis caching because weather data does not need to be refetched on every page request.",
+      securityAndCostControl: "Security & Cost Control",
+      securityAndCostControlText: [
+        "Secrets are used server-side only through environment variables. Local .env files are excluded from Git tracking.",
+        "AI functionality is intentionally disabled behind a feature flag until billing, usage limits and activation are explicitly approved.",
+        "Redis protects API and AI flows through rate limiting and caching. Dependency advisories were resolved using pnpm overrides, workspace configuration and audit checks.",
+      ],
+      authorTitle: "Author & Project Context",
       authorText:
-        "Demian Lienert publicly positions himself at the intersection of modern web development, AI workflows, visual systems and platform-oriented technical thinking. This dashboard serves as a practical proof point within that profile.",
+        "Demian Lienert develops the Swiss Market Dashboard as part of the AI-Techart & Dynamics ecosystem. The project combines modern web development, data integration, AI-ready infrastructure and platform-oriented technical thinking in a publicly accessible application.",
       linksLabel: "Further Links",
     },
   },
 };
+
+function getLayerIcon(icon: AboutContent["productionLayers"][number]["icon"]) {
+  switch (icon) {
+    case "database":
+      return <Database className="size-4 text-primary" />;
+    case "flag":
+      return <Flag className="size-4 text-primary" />;
+    case "bot":
+      return <Bot className="size-4 text-primary" />;
+    case "redis":
+      return <Gauge className="size-4 text-primary" />;
+    case "security":
+      return <ShieldCheck className="size-4 text-primary" />;
+    case "deployment":
+      return <Server className="size-4 text-primary" />;
+    default:
+      return <GitBranch className="size-4 text-primary" />;
+  }
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -237,6 +371,21 @@ export default async function AboutPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary" className="gap-1">
+            <Server className="size-3" />
+            Production-oriented
+          </Badge>
+          <Badge variant="outline" className="gap-1">
+            <Database className="size-3" />
+            Postgres-backed
+          </Badge>
+          <Badge variant="outline" className="gap-1">
+            <ShieldCheck className="size-3" />
+            Cost-controlled AI
+          </Badge>
+        </div>
+
         <h1 className="text-3xl font-bold tracking-tight">{t.about.title}</h1>
         <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
           {t.about.description}
@@ -261,12 +410,33 @@ export default async function AboutPage() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               {content.projectHighlights.map((item) => (
                 <li key={item} className="flex gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground/70" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/70" />
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-primary/20 bg-linear-to-br from-primary/5 via-background to-background">
+        <CardHeader>
+          <CardTitle>{content.sections.productionArchitecture}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {content.productionLayers.map((layer) => (
+            <div key={layer.title} className="rounded-xl border bg-background/70 p-4">
+              <div className="flex items-center gap-2">
+                {getLayerIcon(layer.icon)}
+                <h2 className="text-sm font-semibold text-foreground">
+                  {layer.title}
+                </h2>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {layer.description}
+              </p>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
@@ -320,7 +490,7 @@ export default async function AboutPage() {
           <CardTitle>{content.sections.techStack}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {content.techStack.map((stack) => (
               <div key={stack.category} className="space-y-2">
                 <h2 className="text-sm font-semibold text-foreground">
@@ -374,6 +544,25 @@ export default async function AboutPage() {
               {content.sections.openMeteoText}
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{content.sections.securityAndCostControl}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          {content.sections.securityAndCostControlText.map((item) => (
+            <div key={item} className="rounded-xl border bg-muted/20 p-4">
+              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <LockKeyhole className="size-4 text-primary" />
+                Control
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {item}
+              </p>
+            </div>
+          ))}
         </CardContent>
       </Card>
 

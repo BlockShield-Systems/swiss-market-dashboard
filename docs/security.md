@@ -2,7 +2,7 @@
 
 This document describes the current security and cost-control posture of the Swiss Market Dashboard.
 
-The project is built as a production-oriented portfolio platform. Security decisions are intentionally documented because the application integrates external APIs, database credentials, Redis credentials, and AI infrastructure.
+The project is built as a production-oriented intelligence platform. Security decisions are intentionally documented because the application integrates external APIs, database credentials, Redis credentials, feature-controlled modules, caching infrastructure, rate limiting, and AI-ready functionality.
 
 ---
 
@@ -83,9 +83,11 @@ Upstash Redis
 
 Used for:
 
-- rate limiting
-- response cache
-- future counters
+- public API response caching
+- public API rate limiting
+- AI route rate limiting
+- AI response caching
+- short-lived operational counters
 
 Environment variables:
 
@@ -98,9 +100,11 @@ Security decisions:
 
 - Redis credentials are server-side only
 - Redis token is treated as sensitive
-- client identifiers are hashed before being used as rate limit keys
+- client identifiers are hashed before being used as rate-limit keys
 - Redis keys use TTLs to avoid uncontrolled growth
 - Redis eviction is disabled to avoid losing rate-limit integrity unexpectedly
+- public API cache entries are short-lived and do not contain secrets
+- AI response cache entries are protected behind the AI feature flag and rate limit
 
 ---
 
@@ -189,9 +193,12 @@ Current API routes:
 Current protections:
 
 - third-party API keys are not exposed to the browser
+- public API responses use Redis-backed caching to reduce third-party API pressure
+- public API routes use Redis-backed rate limiting for cache misses and abuse reduction
 - request validation is used for the AI route
 - AI route is protected by a feature flag
 - AI route is protected by Redis rate limiting
+- AI route uses Redis response caching to reduce repeated model calls
 - AI route has no public UI trigger yet
 
 ---
@@ -300,7 +307,8 @@ The current project posture follows these principles:
 - store persistent data in a managed SQL database
 - avoid public write endpoints unless needed
 - rate-limit expensive or abuse-prone functionality
-- cache expensive AI responses
+- cache expensive or frequently requested responses
+- protect third-party APIs with short-lived Redis caches and rate limits
 - resolve dependency advisories promptly
 - document production architecture clearly
 
