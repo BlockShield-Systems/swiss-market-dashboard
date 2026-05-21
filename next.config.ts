@@ -77,6 +77,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   async headers() {
     return [
       {
@@ -99,3 +100,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

@@ -323,8 +323,10 @@ Security decisions:
 - Vercel Analytics and Speed Insights endpoints are explicitly allowed
 - CoinGecko image delivery is explicitly allowed for crypto asset images
 - inline scripts and styles are currently allowed for framework compatibility
+- the framework powered-by response header is disabled to reduce passive technology fingerprinting
 
 Future CSP hardening can replace `'unsafe-inline'` with a nonce-based policy. That should be implemented as a separate focused change because an incomplete nonce migration can break Next.js runtime behavior, analytics scripts or styling.
+
 ---
 
 ## Dependency Security
@@ -455,4 +457,5 @@ Potential future improvements:
 - CSP nonce-based hardening without 'unsafe-inline'
 - automated security header regression checks
 - automated dependency update workflow
+
 
