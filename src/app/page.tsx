@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { MarketOverviewChart } from "@/components/crypto/market-overview-chart";
+import { ArchitectureBadges } from "@/components/dashboard/architecture-badges";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -162,13 +163,15 @@ export default async function HomePage() {
       };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{t.home.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground md:text-base">
           {t.home.description}
         </p>
       </div>
+
+      <ArchitectureBadges locale={locale} />
 
       {hasDataWarning ? (
         <Card className="border-amber-500/30 bg-amber-500/5">

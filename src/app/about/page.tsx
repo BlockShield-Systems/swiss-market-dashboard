@@ -11,6 +11,7 @@ import {
   Server,
   ShieldCheck,
 } from "lucide-react";
+import { ArchitectureBadges } from "@/components/dashboard/architecture-badges";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDictionary, type Locale } from "@/lib/i18n";
@@ -435,7 +436,7 @@ export default async function AboutPage() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
+      <header className="space-y-4">
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary" className="gap-1">
             <Server className="size-3" />
@@ -450,6 +451,8 @@ export default async function AboutPage() {
             {content.sections.badgeAi}
           </Badge>
         </div>
+
+        <ArchitectureBadges locale={locale} compact />
 
         <h1 className="text-3xl font-bold tracking-tight">{t.about.title}</h1>
         <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
