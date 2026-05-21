@@ -685,6 +685,7 @@ reproducible commands
 README.md                       Project overview and operational entry point
 docs/architecture.md            System architecture and runtime flows
 docs/architecture-diagrams.md   Visual architecture and runtime diagrams
+docs/case-study.md              Engineering case study and trade-off analysis
 docs/security.md                Security controls and production headers
 docs/feedback.md                Public technical feedback guide
 docs/project-evidence.md        Objective verification and project evidence
@@ -694,7 +695,6 @@ scripts/smoke-test-production.mjs Production smoke test runner
 Recommended next documentation additions:
 
 ```txt
-docs/case-study.md
 docs/openapi.yaml
 docs/operations.md
 docs/decisions/
@@ -709,8 +709,6 @@ CHANGELOG.md
 Near-term improvements:
 
 ```txt
-Architecture diagrams
-Engineering case study
 OpenAPI specification for public APIs
 Operations runbook
 Security policy and threat model
