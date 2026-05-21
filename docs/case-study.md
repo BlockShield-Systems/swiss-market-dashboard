@@ -912,8 +912,6 @@ README.md
 docs/architecture.md
 docs/architecture-diagrams.md
 docs/security.md
-docs/project-evidence.md
-docs/feedback.md
 scripts/smoke-test-production.mjs
 ```
 

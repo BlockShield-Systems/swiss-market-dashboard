@@ -961,13 +961,11 @@ docs/case-study.md
 Project evidence:
 
 ```txt
-docs/project-evidence.md
 ```
 
 Feedback guide:
 
 ```txt
-docs/feedback.md
 ```
 
 Production smoke test:

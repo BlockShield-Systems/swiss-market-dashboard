@@ -1,194 +1,213 @@
 # Architecture Diagrams
 
-This document provides visual architecture diagrams for Swiss Market Dashboard.
+This document contains visual architecture and runtime diagrams for the Swiss Market Dashboard.
 
-The diagrams are intended to make the runtime structure, data flows, cache behavior, security boundaries and production verification process easier to review.
-
----
-
-## 1. System Context
-
-```mermaid
-flowchart TD
-  User["User Browser"] --> Vercel["Vercel Edge / CDN"]
-  Vercel --> App["Next.js Application"]
-
-  App --> Pages["App Router Pages"]
-  App --> ApiRoutes["Route Handlers / Public APIs"]
-  App --> OgImage["OpenGraph Image Route"]
-  App --> SeoFiles["robots.txt / sitemap.xml"]
-
-  Pages --> DataServices["Shared Cached Data Services"]
-  ApiRoutes --> DataServices
-
-  DataServices --> Redis["Upstash Redis"]
-  DataServices --> CoinGecko["CoinGecko API"]
-  DataServices --> OpenMeteo["Open-Meteo API"]
-
-  ApiRoutes --> RateLimit["Redis-backed Rate Limiting"]
-  RateLimit --> Redis
-
-  ApiRoutes --> Postgres["Neon Postgres"]
-  Postgres --> Drizzle["Drizzle ORM"]
-
-  ApiRoutes --> AiGateway["Vercel AI Gateway"]
-  AiGateway -. "disabled by feature flag in production" .-> FeatureFlags["Feature Flags"]
-
-  App --> Analytics["Vercel Analytics / Speed Insights"]
-```
-
-Main idea:
-
-```txt
-The application is deployed on Vercel and uses server-side integrations for external APIs, Redis caching, Redis rate limiting and Postgres persistence.
-```
+The diagrams focus on system structure, request flow, shared cached data providers, public API behavior, security boundaries, and operational verification.
 
 ---
 
-## 2. Container Architecture
+## System Context
 
 ```mermaid
 flowchart LR
-  subgraph Client["Client Layer"]
-    Browser["Browser"]
-    UI["React UI Components"]
-  end
+  User["Browser / Public Client"]
+  Vercel["Vercel Edge / CDN"]
+  App["Next.js App Router"]
+  Redis["Upstash Redis"]
+  Postgres["Neon Postgres"]
+  CoinGecko["CoinGecko API"]
+  OpenMeteo["Open-Meteo API"]
+  AIGateway["Vercel AI Gateway"]
 
-  subgraph App["Next.js Application"]
-    Pages["App Router Pages"]
-    ServerComponents["Server Components"]
-    ClientComponents["Client Components"]
-    RouteHandlers["Route Handlers"]
-    FeatureFlagLayer["Feature Flag Layer"]
-  end
-
-  subgraph Data["Data Access Layer"]
-    CachedProviders["Shared Cached Data Providers"]
-    CacheUtils["Cache Utilities"]
-    ApiClients["External API Clients"]
-    DbQueries["Database Query Helpers"]
-  end
-
-  subgraph Infra["Infrastructure"]
-    Redis["Upstash Redis"]
-    Neon["Neon Postgres"]
-    CoinGecko["CoinGecko"]
-    OpenMeteo["Open-Meteo"]
-    AiGateway["Vercel AI Gateway"]
-  end
-
-  Browser --> UI
-  UI --> Pages
-  Pages --> ServerComponents
-  Pages --> ClientComponents
-  Pages --> CachedProviders
-
-  RouteHandlers --> FeatureFlagLayer
-  RouteHandlers --> CachedProviders
-  RouteHandlers --> DbQueries
-
-  CachedProviders --> CacheUtils
-  CachedProviders --> ApiClients
-  CacheUtils --> Redis
-  ApiClients --> CoinGecko
-  ApiClients --> OpenMeteo
-  DbQueries --> Neon
-
-  RouteHandlers --> AiGateway
+  User --> Vercel
+  Vercel --> App
+  App --> Redis
+  App --> Postgres
+  App --> CoinGecko
+  App --> OpenMeteo
+  App --> AIGateway
 ```
 
-Container responsibilities:
+The application exposes public dashboard pages and selected public API routes. External provider access and secret handling remain server-side.
+
+---
+
+## Container Overview
+
+```mermaid
+flowchart TB
+  subgraph Client["Client"]
+    Browser["Browser"]
+  end
+
+  subgraph Hosting["Vercel"]
+    CDN["Edge / CDN"]
+    NextApp["Next.js Application"]
+    Pages["App Router Pages"]
+    Routes["Route Handlers"]
+    Components["Server + Client Components"]
+  end
+
+  subgraph DataLayer["Application Data Layer"]
+    CachedProviders["Shared Cached Data Providers"]
+    ApiClients["External API Clients"]
+    DbAccess["Drizzle ORM Access"]
+    FeatureFlags["Feature Flags"]
+  end
+
+  subgraph ManagedServices["Managed Services"]
+    Redis["Upstash Redis<br/>Cache + Rate Limits"]
+    Neon["Neon Postgres"]
+    AI["Vercel AI Gateway"]
+  end
+
+  subgraph ExternalProviders["External Data Providers"]
+    CG["CoinGecko"]
+    OM["Open-Meteo"]
+  end
+
+  Browser --> CDN
+  CDN --> NextApp
+  NextApp --> Pages
+  NextApp --> Routes
+  NextApp --> Components
+
+  Pages --> CachedProviders
+  Routes --> CachedProviders
+  Routes --> FeatureFlags
+  Routes --> DbAccess
+
+  CachedProviders --> Redis
+  CachedProviders --> ApiClients
+  ApiClients --> CG
+  ApiClients --> OM
+  DbAccess --> Neon
+  Routes --> AI
+```
+
+Main responsibilities:
 
 ```txt
-Pages                  Render dashboard routes
-Route Handlers         Expose public API and AI-ready server endpoints
-Cached Providers       Share external data access between pages and APIs
-Cache Utilities         Read/write JSON data in Redis and create cache headers
-API Clients             Isolate third-party API calls
-Database Queries        Encapsulate Drizzle ORM access
-Feature Flags           Control rollout and cost-sensitive behavior
+Pages                  render dashboard views
+Route handlers         expose public JSON APIs and AI-ready server route
+Cached providers       centralize Redis-backed market and weather data access
+Redis                  stores cache entries and rate-limit state
+Neon Postgres          stores persistent market insights
+Feature flags          control optional and cost-sensitive behavior
+External API clients   isolate provider-specific request and response handling
 ```
 
 ---
 
-## 3. Public API Request Flow
+## Public Page Request Flow
 
 ```mermaid
 sequenceDiagram
-  autonumber
-
-  participant Client as Client
-  participant Route as Next.js Route Handler
-  participant Cache as Shared Cached Data Service
+  participant Client as Browser
+  participant Vercel as Vercel Edge/CDN
+  participant App as Next.js Page
+  participant Provider as Shared Cached Data Provider
   participant Redis as Upstash Redis
-  participant RateLimit as Rate Limit
-  participant Provider as External Provider
-  participant Response as JSON Response
+  participant External as External API
 
-  Client->>Route: GET public API route
-  Route->>Cache: read cached data
-  Cache->>Redis: get cache key
+  Client->>Vercel: GET page
+  Vercel->>App: Render route
+  App->>Provider: Request page data
+  Provider->>Redis: Read cached data
 
   alt Cache HIT
-    Redis-->>Cache: cached JSON
-    Cache-->>Route: data + HIT
-    Route-->>Response: 200 JSON + X-Cache: HIT
-    Response-->>Client: response
-  else Cache MISS or SKIP
-    Redis-->>Cache: no data or cache unavailable
-    Cache-->>Route: null + MISS/SKIP
+    Redis-->>Provider: Cached payload
+  else Cache MISS
+    Provider->>External: Fetch provider data
+    External-->>Provider: Provider response
+    Provider->>Redis: Store normalized payload with TTL
+  end
 
-    Route->>RateLimit: check client identifier
+  Provider-->>App: Normalized data
+  App-->>Vercel: HTML response
+  Vercel-->>Client: Page + security headers
+```
+
+Pages and route handlers share the same cached data provider modules where applicable.
+
+---
+
+## Public API Request Flow
+
+```mermaid
+sequenceDiagram
+  participant Client as Public Client
+  participant Route as Next.js Route Handler
+  participant Cache as Redis Cache
+  participant RateLimit as Redis Rate Limit
+  participant Provider as External Provider
+
+  Client->>Route: GET /api/...
+  Route->>Route: Validate parameters
+  Route->>Cache: Read cached data
+
+  alt Cache HIT
+    Cache-->>Route: Cached payload
+    Route-->>Client: 200 + cache headers
+  else Cache MISS
+    Route->>RateLimit: Check client limit
 
     alt Rate limit exceeded
-      RateLimit-->>Route: blocked
-      Route-->>Response: 429 JSON + X-RateLimit-* + X-Cache
-      Response-->>Client: response
-    else Rate limit allowed
-      RateLimit-->>Route: allowed
-      Route->>Provider: fetch upstream data
-      Provider-->>Route: upstream JSON
-      Route->>Redis: write normalized response with TTL
-      Route-->>Response: 200 JSON + X-Cache + X-RateLimit-*
-      Response-->>Client: response
+      RateLimit-->>Route: Block
+      Route-->>Client: 429 + rate-limit headers
+    else Allowed
+      Route->>Provider: Fetch upstream data
+      Provider-->>Route: Provider response
+      Route->>Cache: Store normalized payload
+      Route-->>Client: 200 + cache and rate-limit headers
     end
   end
 ```
 
-Important behavior:
-
-```txt
-Cache HIT responses avoid rate-limit checks for public shared data.
-MISS and SKIP responses go through rate limiting before upstream fetching.
-All public API responses expose route, source, cache and cache-scope headers.
-Rate-limit headers are included when the rate-limit path is evaluated.
-```
+Public API routes are designed to prefer cache reuse before performing external provider calls.
 
 ---
 
-## 4. Shared Cached Data Provider Flow
+## Shared Cached Data Provider Flow
 
 ```mermaid
-flowchart TD
-  Caller["Page or API Route"] --> ReadCache["readCached...()"]
-  ReadCache --> CacheKey["Build stable cache key"]
-  CacheKey --> RedisRead["Redis get"]
+flowchart TB
+  Pages["Server-rendered pages"]
+  Routes["Public API routes"]
 
-  RedisRead --> Decision{"Cached data exists?"}
+  subgraph SharedLayer["Shared Cached Data Providers"]
+    Global["crypto-global.ts"]
+    Weather["weather-forecast.ts"]
+    MarketChart["coin-market-chart.ts"]
+    Ohlc["coin-ohlc-chart.ts"]
+  end
 
-  Decision -->|Yes| Hit["Return data with cacheStatus HIT"]
-  Decision -->|No| Fetch["fetchAndCache...()"]
+  Redis["Upstash Redis"]
+  CoinGecko["CoinGecko API"]
+  OpenMeteo["Open-Meteo API"]
 
-  Fetch --> ExternalApi["External API Client"]
-  ExternalApi --> Normalize["Normalize response"]
-  Normalize --> RedisWrite["Redis set with TTL"]
-  RedisWrite --> ReturnMiss["Return data with cacheStatus MISS or SKIP"]
+  Pages --> Global
+  Pages --> Weather
+  Pages --> MarketChart
+  Pages --> Ohlc
 
-  Hit --> Caller
-  ReturnMiss --> Caller
+  Routes --> Global
+  Routes --> Weather
+  Routes --> MarketChart
+  Routes --> Ohlc
+
+  Global --> Redis
+  Weather --> Redis
+  MarketChart --> Redis
+  Ohlc --> Redis
+
+  Global --> CoinGecko
+  MarketChart --> CoinGecko
+  Ohlc --> CoinGecko
+  Weather --> OpenMeteo
 ```
 
-Current shared cached providers:
+Current shared cached provider files:
 
 ```txt
 src/lib/data/crypto-global.ts
@@ -197,94 +216,125 @@ src/lib/data/coin-market-chart.ts
 src/lib/data/coin-ohlc-chart.ts
 ```
 
-Current cache key pattern:
+Current cache TTLs:
 
 ```txt
-public-api:{domain}:{resource}:{identifier}:{window}:v1
-```
-
-Examples:
-
-```txt
-public-api:crypto:global:v1
-public-api:weather:zurich:v1
-public-api:crypto:market-chart:bitcoin:7:v1
-public-api:crypto:ohlc:bitcoin:7:v1
+Crypto global data        60 seconds
+Coin market chart data    300 seconds
+Coin OHLC chart data      300 seconds
+Weather forecast data     1800 seconds
 ```
 
 ---
 
-## 5. Cache and Rate-Limit Header Flow
+## Public API Observability Headers
 
 ```mermaid
 flowchart LR
-  DataResult["CachedDataResult"] --> CacheHeaders["createCacheHeaders()"]
-  RateLimitResult["RateLimitResult"] --> RateLimitHeaders["createRateLimitHeaders()"]
+  Route["Public API Route"]
+  Cache["Cache State"]
+  RateLimit["Rate Limit State"]
+  Response["HTTP Response"]
 
-  CacheHeaders --> Merge["mergeHeaders()"]
-  RateLimitHeaders --> Merge
+  Route --> Cache
+  Route --> RateLimit
+  Cache --> Response
+  RateLimit --> Response
 
-  Merge --> Response["NextResponse.json()"]
-
-  Response --> H1["X-API-Route"]
-  Response --> H2["X-Data-Source"]
-  Response --> H3["X-Cache"]
-  Response --> H4["X-Cache-TTL"]
-  Response --> H5["X-Cache-Scope"]
-  Response --> H6["Cache-Control"]
-  Response --> H7["X-RateLimit-*"]
+  Response --> ApiRoute["X-API-Route"]
+  Response --> DataSource["X-Data-Source"]
+  Response --> CacheHeader["X-Cache"]
+  Response --> CacheTtl["X-Cache-TTL"]
+  Response --> CacheScope["X-Cache-Scope"]
+  Response --> Limit["X-RateLimit-Limit"]
+  Response --> Remaining["X-RateLimit-Remaining"]
+  Response --> Reset["X-RateLimit-Reset"]
+  Response --> Policy["X-RateLimit-Policy"]
+  Response --> Window["X-RateLimit-Window"]
+  Response --> CacheControl["Cache-Control"]
 ```
 
-Public API observability headers:
+Public API headers are used for operational visibility and integration clarity.
+
+They do not expose:
 
 ```txt
-X-API-Route
-X-Data-Source
-X-Cache
-X-Cache-TTL
-X-Cache-Scope
-X-RateLimit-Limit
-X-RateLimit-Remaining
-X-RateLimit-Reset
-X-RateLimit-Policy
-X-RateLimit-Window
-Cache-Control
-```
-
-Design goal:
-
-```txt
-Runtime behavior should be externally verifiable without exposing secrets, raw client identifiers or internal credentials.
+provider credentials
+Redis credentials
+database credentials
+raw Redis keys
+raw client identifiers
+private infrastructure details
 ```
 
 ---
 
-## 6. AI-Ready Route Protection Flow
+## Rate-Limit Flow
 
 ```mermaid
-flowchart TD
-  Request["POST /api/ai/market-summary"] --> FeatureFlag{"AI feature enabled?"}
+flowchart TB
+  Request["Incoming API Request"]
+  CacheRead["Read Redis Cache"]
+  CacheDecision{"Cache HIT?"}
+  ReturnCached["Return cached response"]
+  IdentifyClient["Derive client identifier"]
+  HashClient["Hash client identifier"]
+  CheckLimit["Check Redis rate limit"]
+  LimitDecision{"Allowed?"}
+  Return429["Return 429"]
+  FetchProvider["Fetch external provider"]
+  StoreCache["Store response in Redis"]
+  ReturnFresh["Return fresh response"]
 
-  FeatureFlag -->|No| Disabled["403 Feature disabled"]
-  FeatureFlag -->|Yes| GatewayKey{"AI gateway key configured?"}
+  Request --> CacheRead
+  CacheRead --> CacheDecision
+  CacheDecision -- Yes --> ReturnCached
+  CacheDecision -- No --> IdentifyClient
+  IdentifyClient --> HashClient
+  HashClient --> CheckLimit
+  CheckLimit --> LimitDecision
+  LimitDecision -- No --> Return429
+  LimitDecision -- Yes --> FetchProvider
+  FetchProvider --> StoreCache
+  StoreCache --> ReturnFresh
+```
 
-  GatewayKey -->|No| Misconfigured["503 AI gateway unavailable"]
-  GatewayKey -->|Yes| Validate["Validate request body with Zod"]
+Rate limiting is applied on cache-miss paths where external provider pressure or abuse risk is relevant.
 
-  Validate -->|Invalid| BadRequest["400 Invalid request"]
-  Validate -->|Valid| RateLimit["Redis rate limit"]
+---
 
-  RateLimit -->|Blocked| TooMany["429 Too many requests"]
-  RateLimit -->|Allowed| CacheLookup["Redis AI response cache lookup"]
+## AI-Ready Route Protection Flow
 
-  CacheLookup -->|HIT| CachedResponse["Return cached AI summary"]
-  CacheLookup -->|MISS| CoinContext["Fetch CoinGecko context"]
+```mermaid
+flowchart TB
+  Request["POST /api/ai/market-summary"]
+  FeatureFlag["Check FEATURE_AI_MARKET_SUMMARY_ENABLED"]
+  Enabled{"Enabled?"}
+  Disabled["Return controlled unavailable response"]
+  Validate["Validate request body"]
+  RateLimit["Check AI rate limit"]
+  CacheRead["Read AI response cache"]
+  CacheHit{"Cache HIT?"}
+  ReturnCached["Return cached summary"]
+  FetchMarket["Fetch market context"]
+  AIGateway["Call Vercel AI Gateway"]
+  Persist["Persist insight where applicable"]
+  CacheWrite["Write AI response cache"]
+  ReturnFresh["Return generated summary"]
 
-  CoinContext --> Prompt["Build constrained prompt"]
-  Prompt --> AiGateway["Call Vercel AI Gateway"]
-  AiGateway --> Persist["Persist generated summary in Neon Postgres"]
-  Persist --> CacheWrite["Write AI response cache"]
-  CacheWrite --> Response["Return generated summary"]
+  Request --> FeatureFlag
+  FeatureFlag --> Enabled
+  Enabled -- No --> Disabled
+  Enabled -- Yes --> Validate
+  Validate --> RateLimit
+  RateLimit --> CacheRead
+  CacheRead --> CacheHit
+  CacheHit -- Yes --> ReturnCached
+  CacheHit -- No --> FetchMarket
+  FetchMarket --> AIGateway
+  AIGateway --> Persist
+  Persist --> CacheWrite
+  CacheWrite --> ReturnFresh
 ```
 
 Current production state:
@@ -293,169 +343,228 @@ Current production state:
 FEATURE_AI_MARKET_SUMMARY_ENABLED=false
 ```
 
-Reason:
-
-```txt
-AI execution is cost-sensitive and remains behind a server-side kill switch until provider billing, usage limits and operational controls are deliberately configured.
-```
+The AI path exists but is disabled in production by default to keep model execution, billing, and output behavior under explicit operational control.
 
 ---
 
-## 7. Database Flow for Market Insights
-
-```mermaid
-flowchart TD
-  InsightsPage["/insights page"] --> FeatureFlag{"market-insights-enabled?"}
-
-  FeatureFlag -->|No| NotFound["404 via notFound()"]
-  FeatureFlag -->|Yes| Query["getLatestMarketInsights()"]
-
-  Query --> Drizzle["Drizzle ORM"]
-  Drizzle --> Neon["Neon Postgres"]
-  Neon --> Table["market_insights table"]
-
-  Table --> Records["Insight records"]
-  Records --> Render["Render insight cards"]
-```
-
-Primary table purpose:
-
-```txt
-Persistent market insight archive
-Manual seeded records
-Prepared storage path for future AI-generated summaries
-```
-
----
-
-## 8. Production Verification Flow
-
-```mermaid
-flowchart TD
-  Change["Code or documentation change"] --> LocalChecks["Local quality gate"]
-
-  LocalChecks --> TypeCheck["pnpm type-check"]
-  LocalChecks --> Lint["pnpm lint"]
-  LocalChecks --> Tests["pnpm test:ci"]
-  LocalChecks --> Build["pnpm build"]
-  LocalChecks --> Audit["pnpm audit / pnpm audit --prod"]
-
-  TypeCheck --> Commit["Commit and push"]
-  Lint --> Commit
-  Tests --> Commit
-  Build --> Commit
-  Audit --> Commit
-
-  Commit --> Deploy["Vercel production deployment"]
-  Deploy --> Smoke["pnpm smoke:prod"]
-
-  Smoke --> Routes["HTML routes"]
-  Smoke --> Seo["robots.txt / sitemap.xml"]
-  Smoke --> Og["OpenGraph image"]
-  Smoke --> Api["Public API endpoints"]
-  Smoke --> Headers["Security and API headers"]
-  Smoke --> Json["Basic JSON shapes"]
-
-  Routes --> Result["Production verification result"]
-  Seo --> Result
-  Og --> Result
-  Api --> Result
-  Headers --> Result
-  Json --> Result
-```
-
-Current production smoke-test scope:
-
-```txt
-201 checks
-0 expected failures
-```
-
-Smoke test script:
-
-```txt
-scripts/smoke-test-production.mjs
-```
-
----
-
-## 9. Security Boundary Overview
-
-```mermaid
-flowchart TD
-  Browser["Browser"] --> PublicRoutes["Public pages and public APIs"]
-
-  PublicRoutes --> ServerOnly["Server-side execution boundary"]
-
-  ServerOnly --> Env["Environment variables"]
-  ServerOnly --> Redis["Upstash Redis"]
-  ServerOnly --> Db["Neon Postgres"]
-  ServerOnly --> Providers["External APIs"]
-
-  Env --> Secrets["Secrets remain server-side"]
-
-  PublicRoutes --> Headers["Security headers"]
-  PublicRoutes --> RateLimit["Rate limiting"]
-  PublicRoutes --> FeatureFlags["Feature flags"]
-
-  RateLimit --> HashedClient["Hashed client identifiers"]
-  FeatureFlags --> KillSwitch["Cost-sensitive kill switches"]
-  Headers --> BrowserPolicy["Browser-enforced security policy"]
-```
-
-Protected concerns:
-
-```txt
-API keys
-Database URLs
-Redis credentials
-AI gateway credentials
-Raw client identifiers
-Cost-sensitive AI execution
-```
-
-Production controls:
-
-```txt
-CSP
-HSTS
-X-Frame-Options
-X-Content-Type-Options
-Permissions-Policy
-Rate limiting
-Feature flags
-No X-Powered-By header
-Production smoke test verification
-```
-
----
-
-## 10. Documentation Relationship
+## Market Insights Data Flow
 
 ```mermaid
 flowchart LR
-  Readme["README.md"] --> Architecture["docs/architecture.md"]
-  Readme --> Security["docs/security.md"]
-  Readme --> Evidence["docs/project-evidence.md"]
-  Readme --> Feedback["docs/feedback.md"]
+  InsightsPage["/insights page"]
+  FeatureFlag["market-insights-enabled"]
+  Query["getLatestMarketInsights()"]
+  Drizzle["Drizzle ORM"]
+  Neon["Neon Postgres"]
+  Table["market_insights"]
 
-  Architecture --> Diagrams["docs/architecture-diagrams.md"]
-  Security --> ThreatModel["Future: docs/threat-model.md"]
-  Evidence --> Smoke["scripts/smoke-test-production.mjs"]
-  Feedback --> IssueTemplate[".github/ISSUE_TEMPLATE/technical-feedback.yml"]
-
-  Diagrams --> CaseStudy["docs/case-study.md"]
-  Architecture --> OpenApi["docs/openapi.yaml"]
-  Evidence --> Operations["docs/operations.md"]
+  InsightsPage --> FeatureFlag
+  FeatureFlag --> Query
+  Query --> Drizzle
+  Drizzle --> Neon
+  Neon --> Table
 ```
 
-Documentation intent:
+The `/insights` route reads persisted insight records through server-side data access.
+
+---
+
+## Security Boundary Overview
+
+```mermaid
+flowchart TB
+  subgraph Public["Public / Untrusted"]
+    Browser["Browser"]
+    APIClient["Public API Client"]
+  end
+
+  subgraph AppBoundary["Application Boundary"]
+    NextApp["Next.js Application"]
+    RouteHandlers["Route Handlers"]
+    Validation["Validation"]
+    Headers["Security Headers"]
+    FeatureFlags["Feature Flags"]
+  end
+
+  subgraph ServerOnly["Server-Side Only"]
+    Env["Environment Variables"]
+    RedisClient["Redis Client"]
+    DbClient["Database Client"]
+    ProviderClients["External Provider Clients"]
+  end
+
+  subgraph Managed["Managed Services"]
+    Redis["Upstash Redis"]
+    Neon["Neon Postgres"]
+    Providers["CoinGecko / Open-Meteo / AI Gateway"]
+  end
+
+  Browser --> NextApp
+  APIClient --> RouteHandlers
+  NextApp --> Headers
+  RouteHandlers --> Validation
+  RouteHandlers --> FeatureFlags
+  RouteHandlers --> RedisClient
+  RouteHandlers --> DbClient
+  RouteHandlers --> ProviderClients
+
+  Env --> RedisClient
+  Env --> DbClient
+  Env --> ProviderClients
+
+  RedisClient --> Redis
+  DbClient --> Neon
+  ProviderClients --> Providers
+```
+
+Sensitive values must remain server-side:
 
 ```txt
-README.md provides the entry point.
-docs/architecture.md explains the system structure.
-docs/architecture-diagrams.md visualizes the runtime model.
-docs/security.md documents security controls.
-docs/project-evidence.md records objective verification points.
-docs/feedback.md defines useful public technical feedback.
+COINGECKO_API_KEY
+DATABASE_URL
+DATABASE_URL_UNPOOLED
+UPSTASH_REDIS_REST_URL
+UPSTASH_REDIS_REST_TOKEN
+AI_GATEWAY_API_KEY
+```
+
+---
+
+## Production Verification Flow
+
+```mermaid
+flowchart TB
+  Change["Code or documentation change"]
+  LocalChecks["Local quality gate"]
+  Build["Production build"]
+  Deploy["Production deployment"]
+  Smoke["Production smoke test"]
+  Result{"All checks pass?"}
+  Commit["Commit and push"]
+  Investigate["Investigate and fix"]
+
+  Change --> LocalChecks
+  LocalChecks --> Build
+  Build --> Deploy
+  Deploy --> Smoke
+  Smoke --> Result
+  Result -- Yes --> Commit
+  Result -- No --> Investigate
+  Investigate --> LocalChecks
+```
+
+Recommended local and production verification:
+
+```bash
+pnpm type-check
+pnpm lint
+pnpm test:ci
+pnpm build
+pnpm audit
+pnpm audit --prod
+pnpm smoke:prod
+```
+
+Expected production smoke-test baseline:
+
+```txt
+201 checks passed
+0 checks failed
+```
+
+---
+
+## Documentation Relationships
+
+```mermaid
+flowchart LR
+  Readme["README.md"]
+  SecurityPolicy["SECURITY.md"]
+  Architecture["docs/architecture.md"]
+  Diagrams["docs/architecture-diagrams.md"]
+  CaseStudy["docs/case-study.md"]
+  OpenApi["docs/openapi.yaml"]
+  Operations["docs/operations.md"]
+  Security["docs/security.md"]
+  ThreatModel["docs/threat-model.md"]
+  Smoke["scripts/smoke-test-production.mjs"]
+
+  Readme --> SecurityPolicy
+  Readme --> Architecture
+  Readme --> Diagrams
+  Readme --> CaseStudy
+  Readme --> OpenApi
+  Readme --> Operations
+  Readme --> Security
+  Readme --> ThreatModel
+  Readme --> Smoke
+
+  Architecture --> Diagrams
+  Architecture --> OpenApi
+  SecurityPolicy --> Security
+  SecurityPolicy --> ThreatModel
+  Security --> ThreatModel
+  Operations --> Smoke
+```
+
+Current documentation map:
+
+```txt
+README.md                         Project overview and operational entry point
+SECURITY.md                       Security policy and vulnerability reporting
+docs/architecture.md              System architecture and runtime flows
+docs/architecture-diagrams.md     Visual architecture and runtime diagrams
+docs/case-study.md                Engineering case study and trade-off analysis
+docs/openapi.yaml                 Public API contract for market and weather endpoints
+docs/operations.md                Operations runbook and production verification procedures
+docs/security.md                  Technical security controls and production headers
+docs/threat-model.md              Public threat model and risk overview
+scripts/smoke-test-production.mjs Production smoke-test runner
+```
+
+Recommended future additions:
+
+```txt
+docs/decisions/
+CHANGELOG.md
+```
+
+---
+
+## Notes
+
+The diagrams intentionally show only public and operationally relevant structure.
+
+They do not include:
+
+```txt
+real secrets
+provider tokens
+database credentials
+Redis credentials
+private infrastructure details
+```
+
+For detailed API response schemas, use:
+
+```txt
+docs/openapi.yaml
+```
+
+For technical security controls, use:
+
+```txt
+docs/security.md
+```
+
+For security reporting, use:
+
+```txt
+SECURITY.md
+```
+
+For the public threat model, use:
+
+```txt
+docs/threat-model.md
 ```

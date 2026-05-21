@@ -1,49 +1,67 @@
 # Architecture
 
-Swiss Market Dashboard is structured as a production-oriented fullstack intelligence platform built on Next.js, Vercel, Neon Postgres, Upstash Redis, and Vercel AI Gateway.
+This document describes the runtime architecture of the Swiss Market Dashboard.
 
-The platform combines crypto market data, Swiss weather information, persistent market insights, Redis-backed caching, rate limiting, feature flags, and AI-ready market analysis infrastructure.
+The goal is to explain how the application is structured, how data flows through the system, where external providers are used, how caching and rate limiting are applied, and how operational controls such as feature flags and production verification fit together.
 
-The architecture is designed around clear separation of responsibilities:
-
-- UI rendering
-- API aggregation
-- persistent storage
-- feature control
-- AI execution
-- caching and rate limiting
-- deployment and observability
-
----
-
-## Architecture Diagrams
-
-Visual architecture diagrams are available in:
+Visual diagrams are maintained separately:
 
 ```txt
 docs/architecture-diagrams.md
 ```
 
-The diagram documentation covers:
+---
+
+## System Scope
+
+Swiss Market Dashboard is a production-oriented full-stack data application built with:
 
 ```txt
-System context
-Container architecture
-Public API request flow
-Shared cached data provider flow
-Cache and rate-limit header flow
-AI-ready route protection flow
-Database flow for market insights
-Production verification flow
-Security boundaries
-Documentation relationships
+Next.js App Router
+React
+TypeScript
+Vercel
+Neon Postgres
+Drizzle ORM
+Upstash Redis
+CoinGecko API
+Open-Meteo API
+Vercel AI Gateway integration
+```
+
+Production deployment:
+
+```txt
+https://dashboard.ai-techart.com
+```
+
+Repository:
+
+```txt
+https://github.com/BlockShield-Systems/swiss-market-dashboard
+```
+
+The application provides:
+
+```txt
+public dashboard pages
+crypto market data
+Swiss weather data
+persistent market insights
+public API routes
+Redis-backed caching
+Redis-backed rate limiting
+security headers
+feature-flagged AI infrastructure
+production smoke-test verification
 ```
 
 ---
-## High-Level System Overview
+
+## High-Level Runtime Flow
 
 ```txt
-User Browser
+Browser
   |
   v
 Vercel Edge / CDN
@@ -51,96 +69,312 @@ Vercel Edge / CDN
   v
 Next.js Application
   |
-  +-- App Router Pages
+  +-- App Router pages
+  +-- Server components
+  +-- Client components
+  +-- Route handlers
+  |
+  +-- Shared cached data providers
   |     |
-  |     +-- Shared Cached Data Services
+  |     +-- Upstash Redis
+  |     +-- CoinGecko API
+  |     +-- Open-Meteo API
   |
-  +-- Server Components
-  |
-  +-- Client Components
-  |
-  +-- Route Handlers
-        |
-        +-- Shared Cached Data Services
-        +-- Neon Postgres
-        +-- Upstash Redis
-        +-- Vercel AI Gateway
-
-Shared Cached Data Services
-  |
-  +-- Upstash Redis cache
-  +-- CoinGecko API
-  +-- Open-Meteo API
+  +-- Neon Postgres via Drizzle ORM
+  +-- Vercel AI Gateway integration
 ```
 
-The architecture avoids duplicated external API access for shared market and weather data.
-Server-rendered pages and public API routes now use the same cached data service modules.
+The architecture avoids duplicated data-fetching paths by using shared cached data provider modules for both pages and public API routes where applicable.
 
 ---
 
-## Frontend Layer
+## Application Layers
 
-The frontend is built with:
+### Presentation Layer
 
-- Next.js App Router
-- React
-- TypeScript
-- Tailwind CSS
-- reusable UI components
-- Recharts
-- lightweight-charts
+The presentation layer is built with:
 
-Main routes:
+```txt
+Next.js App Router
+React
+TypeScript
+Tailwind CSS
+UI components
+Recharts
+lightweight-charts
+lucide-react
+```
+
+Public pages:
 
 ```txt
 /
- /about
  /crypto
  /crypto/[id]
  /weather
- /settings
  /insights
-```
-
-The frontend combines server-rendered pages with interactive client components.
-
-Examples:
-
-- crypto tables
-- chart mode switching
-- locale/preferences provider
-- dynamic chart rendering
-- insights archive cards
-
----
-
-## API Layer
-
-API routes are implemented using Next.js Route Handlers.
-
-Current API routes:
-
-```txt
-/api/crypto/global
-/api/crypto/[id]/market-chart
-/api/crypto/[id]/ohlc
-/api/weather
-/api/ai/market-summary
+ /settings
+ /about
 ```
 
 Responsibilities:
 
-- normalize third-party API responses
-- isolate API keys from the browser
-- apply validation
-- support feature flags
-- apply Redis-backed caching and rate limiting where appropriate
-- return stable JSON contracts to the frontend
-- expose standardized response headers for cache, rate-limit, data-source and route observability
+```txt
+render dashboard pages
+display normalized market and weather data
+provide interactive chart behavior
+display persisted market insights
+read feature-controlled defaults
+avoid exposing server-side secrets
+```
 
-Public API response headers are standardized for the shared market and weather APIs.
+The UI uses server-side data access where possible and client components where interactivity is required.
 
-Current public API observability headers:
+---
+
+### Route Handler Layer
+
+Public API routes are implemented with Next.js Route Handlers.
+
+Current public API routes:
+
+```txt
+GET /api/crypto/global
+GET /api/weather?key=zurich
+GET /api/crypto/{id}/market-chart?days=7
+GET /api/crypto/{id}/ohlc?days=7
+```
+
+AI-ready route:
+
+```txt
+POST /api/ai/market-summary
+```
+
+Responsibilities:
+
+```txt
+validate request parameters
+read from shared cached data providers
+apply rate limiting on relevant paths
+return stable JSON responses
+expose safe observability headers
+isolate third-party provider credentials
+handle upstream failures without leaking internals
+```
+
+The public API contract is documented in:
+
+```txt
+docs/openapi.yaml
+```
+
+---
+
+## Shared Cached Data Providers
+
+Shared cached data providers centralize access to external market and weather data.
+
+Current files:
+
+```txt
+src/lib/data/crypto-global.ts
+src/lib/data/weather-forecast.ts
+src/lib/data/coin-market-chart.ts
+src/lib/data/coin-ohlc-chart.ts
+```
+
+Purpose:
+
+```txt
+avoid duplicated external API calls
+reuse Redis-backed cache behavior
+share normalized data between pages and API routes
+keep provider-specific logic outside page components
+make cache behavior testable
+```
+
+General flow:
+
+```txt
+Page or API route
+  |
+  v
+Shared cached data provider
+  |
+  +-- read Redis cache
+  |
+  +-- return cached payload on HIT
+  |
+  +-- fetch external provider on MISS
+  |
+  +-- normalize provider response
+  |
+  +-- write Redis cache with TTL
+  |
+  v
+Return normalized data
+```
+
+Current cache TTLs:
+
+```txt
+Crypto global data        60 seconds
+Coin market chart data    300 seconds
+Coin OHLC chart data      300 seconds
+Weather forecast data     1800 seconds
+```
+
+---
+
+## External Data Providers
+
+### CoinGecko
+
+CoinGecko is used for crypto market data.
+
+Used for:
+
+```txt
+global crypto market data
+coin market data
+market chart data
+OHLC/candlestick data
+crypto asset images
+```
+
+Security and architecture rules:
+
+```txt
+CoinGecko access happens server-side.
+The API key is read from environment variables.
+The API key is never exposed to the browser.
+Provider responses are normalized before public exposure.
+Non-OK provider responses are handled explicitly.
+```
+
+---
+
+### Open-Meteo
+
+Open-Meteo is used for Swiss weather forecast data.
+
+Used for:
+
+```txt
+weather forecast data
+Swiss city weather module
+weather API responses
+```
+
+Security and architecture rules:
+
+```txt
+Open-Meteo access happens server-side.
+Weather responses are normalized before use.
+Invalid city keys are rejected or handled according to route behavior.
+Forecast data is cached in Redis.
+```
+
+---
+
+## Redis Layer
+
+Redis provider:
+
+```txt
+Upstash Redis
+```
+
+Redis is used for:
+
+```txt
+shared data cache
+public API rate limiting
+AI route rate limiting
+AI response cache
+short-lived operational state
+```
+
+Core Redis-related files:
+
+```txt
+src/lib/redis.ts
+src/lib/cache.ts
+src/lib/rate-limit.ts
+src/lib/public-api-rate-limit.ts
+src/lib/request-ip.ts
+```
+
+Redis design goals:
+
+```txt
+reduce external provider pressure
+avoid duplicated provider calls
+support consistent cache behavior across pages and APIs
+provide rate-limit state
+avoid exposing raw client identifiers
+keep cache data server-side
+```
+
+Public API JSON responses currently use:
+
+```txt
+Cache-Control: no-store
+```
+
+Reason:
+
+```txt
+Redis is the controlled cache layer.
+Browser and CDN caching are not the primary cache mechanism for public JSON APIs.
+```
+
+---
+
+## Rate Limiting
+
+Public APIs use Redis-backed rate limiting.
+
+Current public API rate limits:
+
+```txt
+Crypto market data APIs   60 requests / minute / client identifier
+General public APIs       120 requests / minute / client identifier
+```
+
+AI route limit:
+
+```txt
+AI summary route          5 requests / 10 minutes / client identifier
+```
+
+Rate limiting is applied to reduce:
+
+```txt
+public API abuse
+cache-miss amplification
+external provider pressure
+cost-sensitive AI execution
+```
+
+Client identifiers are derived from request information and are not returned in public API responses.
+
+Public rate-limit headers may include:
+
+```txt
+X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+X-RateLimit-Policy
+X-RateLimit-Window
+```
+
+---
+
+## Public API Observability
+
+Public API responses expose standardized headers for operational visibility.
 
 ```txt
 X-API-Route
@@ -156,167 +390,38 @@ X-RateLimit-Window
 Cache-Control
 ```
 
-Header meaning:
+Purpose:
 
 ```txt
-X-API-Route              Logical route identifier
-X-Data-Source            External upstream data source
-X-Cache                  Redis cache status: HIT, MISS or SKIP
-X-Cache-TTL              Cache TTL in seconds
-X-Cache-Scope            Cache implementation scope
-X-RateLimit-Limit        Maximum requests allowed in the active window
-X-RateLimit-Remaining    Remaining requests in the active window
-X-RateLimit-Reset        Reset timestamp for the active rate-limit window
-X-RateLimit-Policy       Applied rate-limit policy
-X-RateLimit-Window       Human-readable rate-limit window
-Cache-Control            Browser/CDN caching policy
+identify the logical route
+identify the upstream data source
+show Redis cache state
+show cache TTL
+show cache scope
+show rate-limit state
+support integration debugging
 ```
 
-Current public API route identifiers:
+These headers must not expose:
 
 ```txt
-/api/crypto/global              X-API-Route: crypto-global
-/api/crypto/[id]/market-chart   X-API-Route: crypto-market-chart
-/api/crypto/[id]/ohlc           X-API-Route: crypto-ohlc-chart
-/api/weather                    X-API-Route: weather-forecast
+provider credentials
+database URLs
+Redis tokens
+raw Redis keys
+raw client identifiers
+private deployment configuration
 ```
-
-Current public API data-source identifiers:
-
-```txt
-CoinGecko APIs     X-Data-Source: coingecko
-Open-Meteo API     X-Data-Source: open-meteo
-```
-
-Current cache scope:
-
-```txt
-X-Cache-Scope: shared-data-service
-```
-
-Public API responses currently use:
-
-```txt
-Cache-Control: no-store
-```
-
-This is intentional because Redis is the controlled cache layer. Browser/CDN caching is not relied on for these JSON endpoints.
 
 ---
 
-## Shared Cached Data Services
+## Database Layer
 
-Shared cached data services centralize Redis-backed data access for frequently requested market and weather data.
-
-The goal is to avoid duplicated fetch logic between server-rendered pages and public API routes.
-
-Current shared cached data service files:
+Database provider:
 
 ```txt
-src/lib/data/crypto-global.ts
-src/lib/data/weather-forecast.ts
-src/lib/data/coin-market-chart.ts
-src/lib/data/coin-ohlc-chart.ts
+Neon Postgres
 ```
-
-Current usage:
-
-```txt
-Server-rendered pages
-  |
-  v
-Shared cached data services
-  |
-  v
-Redis cache
-  |
-  v
-External API helper
-
-Public API routes
-  |
-  v
-Shared cached data services
-  |
-  v
-Redis cache
-  |
-  v
-External API helper
-```
-
-Current cache TTLs:
-
-```txt
-Crypto global data        60 seconds
-Coin market chart data    300 seconds
-Coin OHLC chart data      300 seconds
-Weather forecast data     1800 seconds
-```
-
-The public API routes still apply request-based rate limiting before returning uncached or freshly generated responses where appropriate.
-Server-rendered pages benefit from the same Redis-backed cache layer without going through internal HTTP calls.
-
-The public API routes also expose standardized observability headers for cache state, upstream source, route identity and rate-limit state.
-
-Example successful cached response headers:
-
-```txt
-X-API-Route: crypto-global
-X-Data-Source: coingecko
-X-Cache: HIT
-X-Cache-TTL: 60
-X-Cache-Scope: shared-data-service
-Cache-Control: no-store
-```
-
-Example uncached response with rate-limit headers:
-
-```txt
-X-API-Route: crypto-market-chart
-X-Data-Source: coingecko
-X-Cache: MISS
-X-Cache-TTL: 300
-X-Cache-Scope: shared-data-service
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 59
-X-RateLimit-Reset: 1779360000000
-X-RateLimit-Policy: market-data-api
-X-RateLimit-Window: 1m
-Cache-Control: no-store
-```
-
-This keeps runtime behavior transparent without exposing secrets or internal credentials.
-
----
-
-## External API Integrations
-
-### CoinGecko
-
-Used for crypto market data:
-
-- global market stats
-- coin details
-- price charts
-- OHLC/candlestick data
-- market cap
-- volume
-- supply data
-
-CoinGecko access is server-side only.
-
-### Open-Meteo
-
-Used for weather data.
-
-Open-Meteo access is handled through a server-side API route.
-
----
-
-## Data Layer
-
-Persistent storage is provided by Neon Postgres.
 
 ORM:
 
@@ -324,13 +429,13 @@ ORM:
 Drizzle ORM
 ```
 
-Migration tool:
+Migration tooling:
 
 ```txt
 Drizzle Kit
 ```
 
-Primary table:
+Primary persisted data:
 
 ```txt
 market_insights
@@ -338,40 +443,49 @@ market_insights
 
 Purpose:
 
-- store manually seeded market insights
-- store future AI-generated crypto summaries
-- support historical intelligence records
-- provide a persistent intelligence archive backed by SQL storage
-
----
-
-## Market Insights Flow
-
 ```txt
-/insights page
-  |
-  v
-getLatestMarketInsights()
-  |
-  v
-Drizzle ORM
-  |
-  v
-Neon Postgres
-  |
-  v
-market_insights table
+store seeded market insights
+support the /insights route
+prepare for future AI-generated market summaries
+keep persistent data separate from cached provider data
 ```
 
-The `/insights` route is protected by the `market-insights-enabled` feature flag.
+Database access rules:
 
-If disabled, the route returns a 404 using Next.js `notFound()`.
+```txt
+database access happens server-side
+DATABASE_URL is never exposed to the browser
+migrations are version-controlled
+public users do not receive direct database access
+current insights UI is read-only
+```
+
+Database commands:
+
+```bash
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
+pnpm db:studio
+```
+
+Runtime database variable:
+
+```env
+DATABASE_URL=...
+```
+
+Migration database variable:
+
+```env
+DATABASE_URL_UNPOOLED=...
+```
 
 ---
 
-## Feature Flag Layer
+## Feature Flags
 
-Feature flags are implemented server-side.
+Feature flags are used as operational controls.
 
 Current flags:
 
@@ -389,37 +503,17 @@ FEATURE_AI_MARKET_SUMMARY_ENABLED=false
 FEATURE_DEFAULT_CRYPTO_CHART_MODE=area
 ```
 
-Purpose:
-
-- control experimental rollout
-- disable cost-sensitive features instantly
-- configure default UI behavior
-- avoid redeploying for simple rollout changes
-
----
-
-## Crypto Chart Mode Flow
+Feature flags are used to:
 
 ```txt
-/crypto/[id]
-  |
-  v
-defaultCryptoChartMode()
-  |
-  v
-CoinPriceChart initialMode
-  |
-  v
-area / line / candlestick
+control optional functionality
+disable cost-sensitive AI execution
+configure default chart behavior
+support controlled rollout
+avoid unnecessary redeployments for simple runtime decisions
 ```
 
-The default chart mode is controlled by:
-
-```env
-FEATURE_DEFAULT_CRYPTO_CHART_MODE=area
-```
-
-Valid values:
+Valid chart modes:
 
 ```txt
 area
@@ -429,9 +523,9 @@ candlestick
 
 ---
 
-## AI Layer
+## AI-Ready Market Summary Route
 
-The AI route is implemented at:
+AI route:
 
 ```txt
 POST /api/ai/market-summary
@@ -443,195 +537,88 @@ Current production state:
 FEATURE_AI_MARKET_SUMMARY_ENABLED=false
 ```
 
-The route is implemented but disabled by default.
+The route exists but is disabled in production by default.
 
-When enabled, the intended flow is:
+Intended protection flow:
 
 ```txt
-Client / future UI action
-  |
-  v
-POST /api/ai/market-summary
-  |
-  v
-Feature flag check
-  |
-  v
-Request validation with Zod
-  |
-  v
-Redis rate limit
-  |
-  v
-Redis cache lookup
-  |
-  v
-CoinGecko coin context fetch
-  |
-  v
-Prompt construction
-  |
-  v
-Vercel AI Gateway
-  |
-  v
-Persist generated summary in Neon Postgres
-  |
-  v
-Cache response in Redis
-  |
-  v
-Return JSON response
+feature flag check
+request validation
+Redis-backed AI rate limit
+AI response cache lookup
+market context fetch
+AI Gateway call
+optional persistence
+cache write
+JSON response
 ```
 
-The AI prompt enforces:
-
-- concise output
-- no financial advice
-- no hype
-- no buy/sell recommendation
-- professional market intelligence tone
-- data uncertainty and market risk notice
-
-Supported locales:
+Implemented controls:
 
 ```txt
-de
-en
+server-side feature flag
+request validation
+Redis-backed rate limiting
+Redis-backed response caching
+server-side AI Gateway access
+no client-side AI provider key exposure
+prompt constraints against financial advice
+```
+
+The route should only be enabled after confirming:
+
+```txt
+billing limits
+provider quota
+rate-limit behavior
+cache behavior
+error handling
+output constraints
+monitoring expectations
+production verification
 ```
 
 ---
 
-## Redis Layer
+## Security Architecture
 
-Upstash Redis is used for:
-
-- shared cached data services
-- public API response caching
-- public API rate limiting
-- AI route rate limiting
-- AI response caching
-- short-lived operational counters
-- abuse-prevention infrastructure
-
-Core Redis utility files:
+Security controls are documented in:
 
 ```txt
-src/lib/redis.ts
-src/lib/rate-limit.ts
-src/lib/public-api-rate-limit.ts
-src/lib/request-ip.ts
-src/lib/cache.ts
+SECURITY.md
+docs/security.md
+docs/threat-model.md
 ```
 
-Shared cached data service files:
+Implemented security controls include:
 
 ```txt
-src/lib/data/crypto-global.ts
-src/lib/data/weather-forecast.ts
-src/lib/data/coin-market-chart.ts
-src/lib/data/coin-ohlc-chart.ts
+server-side secret handling
+placeholder-only .env.example
+security headers
+Content-Security-Policy
+disabled x-powered-by header
+Redis-backed rate limiting
+Redis-backed caching
+feature-flagged AI route
+stable API error responses
+production smoke-test verification
 ```
 
-Current AI rate limit:
+Sensitive values must remain server-side:
 
 ```txt
-5 AI summary requests / 10 minutes / client identifier
+COINGECKO_API_KEY
+DATABASE_URL
+DATABASE_URL_UNPOOLED
+UPSTASH_REDIS_REST_URL
+UPSTASH_REDIS_REST_TOKEN
+AI_GATEWAY_API_KEY
 ```
-
-AI cache TTL:
-
-```txt
-30 minutes
-```
-
-AI cache key format:
-
-```txt
-ai-summary:{locale}:{coinId}
-```
-
-Public API cache TTLs:
-
-```txt
-/api/crypto/global              60 seconds
-/api/crypto/[id]/market-chart   300 seconds
-/api/crypto/[id]/ohlc           300 seconds
-/api/weather                    1800 seconds
-```
-
-Shared cached data service TTLs:
-
-```txt
-Crypto global data        60 seconds
-Coin market chart data    300 seconds
-Coin OHLC chart data      300 seconds
-Weather forecast data     1800 seconds
-```
-
-Public API rate limits:
-
-```txt
-Crypto market data APIs   60 requests / minute / client identifier
-General public APIs       120 requests / minute / client identifier
-```
-
-Current public API rate-limit policies:
-
-```txt
-market-data-api   CoinGecko-backed market data endpoints
-public-api        General public API endpoints
-```
-
-Current public API rate-limit window header:
-
-```txt
-X-RateLimit-Window: 1m
-```
-
-Client identifiers are derived from forwarded IP headers and hashed before use.
-
-Public API cache and rate-limit observability is exposed through standardized response headers:
-
-```txt
-X-API-Route
-X-Data-Source
-X-Cache
-X-Cache-TTL
-X-Cache-Scope
-X-RateLimit-Limit
-X-RateLimit-Remaining
-X-RateLimit-Reset
-X-RateLimit-Policy
-X-RateLimit-Window
-Cache-Control
-```
-
-These headers are designed for debugging, operational visibility and integration clarity. They do not expose secrets or raw client identifiers.
 
 ---
 
-## AI Route Protection Order
-
-The AI route is intentionally protected in this order:
-
-```txt
-1. Feature flag check
-2. Gateway authentication check
-3. Body validation
-4. Rate limit
-5. Cache lookup
-6. CoinGecko fetch
-7. AI Gateway call
-8. Postgres write
-9. Redis cache write
-```
-
-This prevents unnecessary cost and resource consumption.
-
----
-
-## Deployment Layer
+## Deployment Architecture
 
 Deployment target:
 
@@ -647,63 +634,187 @@ https://dashboard.ai-techart.com
 
 Vercel provides:
 
-- production deployments
-- preview deployments
-- environment variables
-- analytics
-- speed insights
-- runtime logs
-- deployment logs
-- domain routing
-
----
-
-## Environment Strategy
-
-Sensitive variables are stored in Vercel Environment Variables and `.env.local` locally.
-
-Sensitive:
-
 ```txt
-DATABASE_URL
-DATABASE_URL_UNPOOLED
-COINGECKO_API_KEY
-AI_GATEWAY_API_KEY
-UPSTASH_REDIS_REST_URL
-UPSTASH_REDIS_REST_TOKEN
+production deployments
+preview deployments
+environment variables
+domain routing
+runtime logs
+deployment logs
+analytics
+speed insights
 ```
 
-Non-secret but server-side configuration:
+Production environment variables are managed through Vercel project settings.
+
+Local environment variables are stored in:
 
 ```txt
-FEATURE_MARKET_INSIGHTS_ENABLED
-FEATURE_AI_MARKET_SUMMARY_ENABLED
-FEATURE_DEFAULT_CRYPTO_CHART_MODE
-AI_MARKET_SUMMARY_MODEL
+.env.local
+```
+
+Public examples use:
+
+```txt
+.env.example
+```
+
+The example file must contain placeholders only.
+
+---
+
+## Build and Runtime Notes
+
+The build may show:
+
+```txt
+Using edge runtime on a page currently disables static generation for that page
+```
+
+Current known source:
+
+```txt
+src/app/opengraph-image.tsx
+export const runtime = "edge";
+```
+
+This is expected for the dynamic OpenGraph image route and does not indicate a failure of normal dashboard pages.
+
+Production validation remains:
+
+```bash
+pnpm build
+pnpm smoke:prod
 ```
 
 ---
 
-## Production Safety Principles
+## Testing and Verification
 
-The architecture follows these principles:
+Main verification commands:
 
-- no secrets in client-side code
-- no secrets committed to Git
-- AI execution disabled by default
-- AI protected by feature flag
-- AI protected by Redis rate limiting
-- AI responses cached to reduce repeated cost
-- database migrations committed to source control
-- dependency advisories monitored and resolved
-- production deployment verified after each major commit
+```bash
+pnpm type-check
+pnpm lint
+pnpm test:ci
+pnpm build
+```
+
+Security and dependency checks:
+
+```bash
+pnpm audit
+pnpm audit --prod
+```
+
+Production smoke test:
+
+```bash
+pnpm smoke:prod
+```
+
+The smoke test validates:
+
+```txt
+key HTML routes
+robots.txt
+sitemap.xml
+OpenGraph image
+public API endpoints
+HTTP status codes
+content types
+security headers
+public API observability headers
+absence of x-powered-by
+basic JSON response shapes
+```
+
+Expected production baseline:
+
+```txt
+201 checks passed
+0 checks failed
+```
 
 ---
 
-## Current Limitations
+## Architecture Constraints
 
-The AI route is implemented but not publicly enabled because Vercel AI Gateway currently requires billing verification before model requests can be processed.
+Current deliberate constraints:
 
-This is a deliberate cost-control decision.
+```txt
+AI execution is disabled in production by default.
+Public JSON APIs use Redis as the controlled cache layer.
+Browser and CDN caching are not relied on for public JSON API data.
+Secrets are server-side only.
+The current public UI does not expose authenticated user features.
+The current insights UI is read-only.
+The OpenGraph image route uses Edge runtime.
+```
 
-The code path remains ready for future activation once billing and usage limits are deliberately configured.
+Deferred intentionally:
+
+```txt
+public AI UI action
+authentication system
+admin panel
+premium or user-specific area
+sandbox
+```
+
+These features should only be added when the product boundary and operational requirements are clear.
+
+---
+
+## Change Impact Rules
+
+When public API behavior changes:
+
+```txt
+update docs/openapi.yaml
+update route tests
+run the quality gate
+run the production smoke test
+```
+
+When cache TTLs or rate limits change:
+
+```txt
+update README.md
+update docs/openapi.yaml where headers or behavior are affected
+update docs/operations.md
+update tests if values are asserted
+```
+
+When security behavior changes:
+
+```txt
+update SECURITY.md if reporting or policy scope changes
+update docs/security.md
+update docs/threat-model.md if risk assumptions change
+run pnpm smoke:prod
+```
+
+When architecture changes:
+
+```txt
+update docs/architecture.md
+update docs/architecture-diagrams.md
+update README.md documentation map if needed
+```
+
+---
+
+## Related Documentation
+
+```txt
+README.md                         Project overview and operational entry point
+SECURITY.md                       Security policy and vulnerability reporting
+docs/architecture-diagrams.md     Visual architecture and runtime diagrams
+docs/case-study.md                Engineering case study and trade-off analysis
+docs/openapi.yaml                 Public API contract for market and weather endpoints
+docs/operations.md                Operations runbook and production verification procedures
+docs/security.md                  Technical security controls and production headers
+docs/threat-model.md              Public threat model and risk overview
+scripts/smoke-test-production.mjs Production smoke-test runner
+```
