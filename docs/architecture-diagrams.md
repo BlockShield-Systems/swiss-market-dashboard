@@ -487,6 +487,7 @@ flowchart LR
   Operations["docs/operations.md"]
   Security["docs/security.md"]
   ThreatModel["docs/threat-model.md"]
+  Changelog["CHANGELOG.md"]
   Smoke["scripts/smoke-test-production.mjs"]
 
   Readme --> SecurityPolicy
@@ -498,6 +499,7 @@ flowchart LR
   Readme --> Security
   Readme --> ThreatModel
   Readme --> Smoke
+  Readme --> Changelog
 
   Architecture --> Diagrams
   Architecture --> OpenApi
@@ -519,6 +521,7 @@ docs/openapi.yaml                 Public API contract for market and weather end
 docs/operations.md                Operations runbook and production verification procedures
 docs/security.md                  Technical security controls and production headers
 docs/threat-model.md              Public threat model and risk overview
+CHANGELOG.md                      Project change history
 scripts/smoke-test-production.mjs Production smoke-test runner
 ```
 
@@ -526,7 +529,6 @@ Recommended future additions:
 
 ```txt
 docs/decisions/
-CHANGELOG.md
 ```
 
 ---

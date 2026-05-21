@@ -541,6 +541,7 @@ docs/openapi.yaml                 Public API contract for market and weather end
 docs/operations.md                Operations runbook and production verification procedures
 docs/security.md                  Technical security controls and production headers
 docs/threat-model.md              Public threat model and risk overview
+CHANGELOG.md                      Project change history
 scripts/smoke-test-production.mjs Production smoke-test runner
 ```
 
@@ -548,7 +549,6 @@ Recommended next documentation additions:
 
 ```txt
 docs/decisions/
-CHANGELOG.md
 ```
 
 ---
@@ -575,7 +575,6 @@ Quality gates before production changes
 Near-term improvements:
 
 ```txt
-Project changelog
 Architecture decision records
 Optional accessibility audit documentation
 Optional CI quality gate documentation
