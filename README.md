@@ -536,6 +536,7 @@ README.md                         Project overview and operational entry point
 SECURITY.md                       Security policy and vulnerability reporting
 docs/architecture.md              System architecture and runtime flows
 docs/architecture-diagrams.md     Visual architecture and runtime diagrams
+docs/decisions/                     Architecture decision records
 docs/case-study.md                Engineering case study and trade-off analysis
 docs/openapi.yaml                 Public API contract for market and weather endpoints
 docs/operations.md                Operations runbook and production verification procedures
@@ -548,7 +549,6 @@ scripts/smoke-test-production.mjs Production smoke-test runner
 Recommended next documentation additions:
 
 ```txt
-docs/decisions/
 ```
 
 ---
@@ -575,7 +575,6 @@ Quality gates before production changes
 Near-term improvements:
 
 ```txt
-Architecture decision records
 Optional accessibility audit documentation
 Optional CI quality gate documentation
 ```

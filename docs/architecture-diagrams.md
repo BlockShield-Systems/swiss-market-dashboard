@@ -482,6 +482,7 @@ flowchart LR
   SecurityPolicy["SECURITY.md"]
   Architecture["docs/architecture.md"]
   Diagrams["docs/architecture-diagrams.md"]
+  Decisions["docs/decisions/"]
   CaseStudy["docs/case-study.md"]
   OpenApi["docs/openapi.yaml"]
   Operations["docs/operations.md"]
@@ -493,6 +494,7 @@ flowchart LR
   Readme --> SecurityPolicy
   Readme --> Architecture
   Readme --> Diagrams
+  Readme --> Decisions
   Readme --> CaseStudy
   Readme --> OpenApi
   Readme --> Operations
@@ -502,6 +504,7 @@ flowchart LR
   Readme --> Changelog
 
   Architecture --> Diagrams
+  Architecture --> Decisions
   Architecture --> OpenApi
   SecurityPolicy --> Security
   SecurityPolicy --> ThreatModel
@@ -516,6 +519,7 @@ README.md                         Project overview and operational entry point
 SECURITY.md                       Security policy and vulnerability reporting
 docs/architecture.md              System architecture and runtime flows
 docs/architecture-diagrams.md     Visual architecture and runtime diagrams
+docs/decisions/                     Architecture decision records
 docs/case-study.md                Engineering case study and trade-off analysis
 docs/openapi.yaml                 Public API contract for market and weather endpoints
 docs/operations.md                Operations runbook and production verification procedures
@@ -528,7 +532,6 @@ scripts/smoke-test-production.mjs Production smoke-test runner
 Recommended future additions:
 
 ```txt
-docs/decisions/
 ```
 
 ---

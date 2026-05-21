@@ -27,7 +27,6 @@ https://keepachangelog.com/en/1.1.0/
 Planned or under consideration:
 
 ```txt
-Architecture decision records
 Optional CI quality gate documentation
 Optional accessibility audit documentation
 Optional CODE_OF_CONDUCT.md if the public contribution flow expands
@@ -35,6 +34,41 @@ Optional CODE_OF_CONDUCT.md if the public contribution flow expands
 
 ---
 
+## 2026-05-22
+
+### Added
+
+Added architecture decision records:
+
+```txt
+docs/decisions/0001-use-nextjs-app-router.md
+docs/decisions/0002-use-redis-for-cache-and-rate-limits.md
+docs/decisions/0003-use-shared-cached-data-providers.md
+docs/decisions/0004-use-feature-flags-for-ai-execution.md
+docs/decisions/0005-use-openapi-for-public-api-contract.md
+docs/decisions/0006-use-production-smoke-tests.md
+```
+
+The ADRs document the accepted architecture decisions for:
+
+```txt
+Next.js App Router
+Redis-backed caching and rate limits
+shared cached data providers
+feature-flagged AI execution
+OpenAPI public API contract
+production smoke-test verification
+```
+
+### Documentation
+
+Updated the documentation map to include:
+
+```txt
+docs/decisions/
+```
+
+---
 ## 2026-05-21
 
 ### Added
