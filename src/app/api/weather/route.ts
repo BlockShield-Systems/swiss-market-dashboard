@@ -14,6 +14,23 @@ import {
   DEFAULT_SWISS_CITY_KEY,
   getSwissCityByKey,
 } from "@/lib/types/weather";
+import type { CacheStatus } from "@/lib/cache";
+
+const API_ROUTE = "weather-forecast";
+const DATA_SOURCE = "open-meteo";
+const CACHE_SCOPE = "shared-data-service";
+const RATE_LIMIT_POLICY = "public-api";
+const RATE_LIMIT_WINDOW = "1m";
+
+function createRouteCacheHeaders(cacheStatus: CacheStatus, ttlSeconds: number) {
+  return createCacheHeaders({
+    cacheStatus,
+    ttlSeconds,
+    dataSource: DATA_SOURCE,
+    cacheScope: CACHE_SCOPE,
+    apiRoute: API_ROUTE,
+  });
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -28,10 +45,10 @@ export async function GET(request: Request) {
       },
       {
         status: 400,
-        headers: createCacheHeaders({
-          cacheStatus: "MISS",
-          ttlSeconds: WEATHER_FORECAST_CACHE_TTL_SECONDS,
-        }),
+        headers: createRouteCacheHeaders(
+          "MISS",
+          WEATHER_FORECAST_CACHE_TTL_SECONDS,
+        ),
       },
     );
   }
@@ -40,10 +57,10 @@ export async function GET(request: Request) {
 
   if (cached.data) {
     return NextResponse.json(cached.data, {
-      headers: createCacheHeaders({
-        cacheStatus: cached.status,
-        ttlSeconds: WEATHER_FORECAST_CACHE_TTL_SECONDS,
-      }),
+      headers: createRouteCacheHeaders(
+        cached.status,
+        WEATHER_FORECAST_CACHE_TTL_SECONDS,
+      ),
     });
   }
 
@@ -54,7 +71,10 @@ export async function GET(request: Request) {
     const rateLimit = getPublicApiRateLimit();
     const rateLimitResult = await rateLimit.limit(identifier);
 
-    rateLimitHeaders = createRateLimitHeaders(rateLimitResult);
+    rateLimitHeaders = createRateLimitHeaders(rateLimitResult, {
+      policy: RATE_LIMIT_POLICY,
+      window: RATE_LIMIT_WINDOW,
+    });
 
     if (!rateLimitResult.success) {
       return NextResponse.json(
@@ -64,10 +84,10 @@ export async function GET(request: Request) {
         {
           status: 429,
           headers: mergeHeaders(
-            createCacheHeaders({
-              cacheStatus: cached.status,
-              ttlSeconds: WEATHER_FORECAST_CACHE_TTL_SECONDS,
-            }),
+            createRouteCacheHeaders(
+              cached.status,
+              WEATHER_FORECAST_CACHE_TTL_SECONDS,
+            ),
             rateLimitHeaders,
           ),
         },
@@ -82,10 +102,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(result.data, {
       headers: mergeHeaders(
-        createCacheHeaders({
-          cacheStatus: result.cacheStatus,
-          ttlSeconds: result.cacheTtlSeconds,
-        }),
+        createRouteCacheHeaders(result.cacheStatus, result.cacheTtlSeconds),
         rateLimitHeaders,
       ),
     });
@@ -99,10 +116,10 @@ export async function GET(request: Request) {
       {
         status: 502,
         headers: mergeHeaders(
-          createCacheHeaders({
-            cacheStatus: cached.status,
-            ttlSeconds: WEATHER_FORECAST_CACHE_TTL_SECONDS,
-          }),
+          createRouteCacheHeaders(
+            cached.status,
+            WEATHER_FORECAST_CACHE_TTL_SECONDS,
+          ),
           rateLimitHeaders,
         ),
       },

@@ -83,11 +83,13 @@ Upstash Redis
 
 Used for:
 
+- shared cached data services
 - public API response caching
 - public API rate limiting
 - AI route rate limiting
 - AI response caching
 - short-lived operational counters
+- abuse-prevention infrastructure
 
 Environment variables:
 
@@ -105,6 +107,8 @@ Security decisions:
 - Redis eviction is disabled to avoid losing rate-limit integrity unexpectedly
 - public API cache entries are short-lived and do not contain secrets
 - AI response cache entries are protected behind the AI feature flag and rate limit
+- public API observability headers expose cache and rate-limit state without exposing secrets
+- raw client IPs are not returned in public API responses
 
 ---
 
@@ -200,6 +204,65 @@ Current protections:
 - AI route is protected by Redis rate limiting
 - AI route uses Redis response caching to reduce repeated model calls
 - AI route has no public UI trigger yet
+
+Public API response headers are standardized for operational visibility.
+
+Current public API observability headers:
+
+```txt
+X-API-Route
+X-Data-Source
+X-Cache
+X-Cache-TTL
+X-Cache-Scope
+X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+X-RateLimit-Policy
+X-RateLimit-Window
+Cache-Control
+```
+
+Security posture of these headers:
+
+- route identity is exposed only as a logical label
+- data source is exposed only as a provider label
+- cache status exposes HIT, MISS or SKIP only
+- cache TTL exposes duration in seconds only
+- rate-limit headers expose quota state only
+- raw IP addresses are never returned
+- Redis keys are never returned
+- Redis credentials are never returned
+- external API keys are never returned
+- server-side stack traces are not returned in public API responses
+
+Current public API cache strategy:
+
+```txt
+Cache-Control: no-store
+```
+
+Reason:
+
+Browser and CDN caching are intentionally not the primary cache layer for these JSON endpoints. Redis is the controlled cache layer because it allows explicit TTLs, shared server-side cache behavior and rate-limit coordination.
+
+Current public API route policies:
+
+```txt
+/api/crypto/global              market-data-api
+/api/crypto/[id]/market-chart   market-data-api
+/api/crypto/[id]/ohlc           market-data-api
+/api/weather                    public-api
+```
+
+Current public API data sources:
+
+```txt
+/api/crypto/global              coingecko
+/api/crypto/[id]/market-chart   coingecko
+/api/crypto/[id]/ohlc           coingecko
+/api/weather                    open-meteo
+```
 
 ---
 
@@ -309,6 +372,8 @@ The current project posture follows these principles:
 - rate-limit expensive or abuse-prone functionality
 - cache expensive or frequently requested responses
 - protect third-party APIs with short-lived Redis caches and rate limits
+- expose safe operational metadata through standardized response headers
+- never expose raw client identifiers, Redis keys or upstream credentials
 - resolve dependency advisories promptly
 - document production architecture clearly
 

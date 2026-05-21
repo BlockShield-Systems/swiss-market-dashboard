@@ -112,6 +112,71 @@ Responsibilities:
 - support feature flags
 - apply Redis-backed caching and rate limiting where appropriate
 - return stable JSON contracts to the frontend
+- expose standardized response headers for cache, rate-limit, data-source and route observability
+
+Public API response headers are standardized for the shared market and weather APIs.
+
+Current public API observability headers:
+
+```txt
+X-API-Route
+X-Data-Source
+X-Cache
+X-Cache-TTL
+X-Cache-Scope
+X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+X-RateLimit-Policy
+X-RateLimit-Window
+Cache-Control
+```
+
+Header meaning:
+
+```txt
+X-API-Route              Logical route identifier
+X-Data-Source            External upstream data source
+X-Cache                  Redis cache status: HIT, MISS or SKIP
+X-Cache-TTL              Cache TTL in seconds
+X-Cache-Scope            Cache implementation scope
+X-RateLimit-Limit        Maximum requests allowed in the active window
+X-RateLimit-Remaining    Remaining requests in the active window
+X-RateLimit-Reset        Reset timestamp for the active rate-limit window
+X-RateLimit-Policy       Applied rate-limit policy
+X-RateLimit-Window       Human-readable rate-limit window
+Cache-Control            Browser/CDN caching policy
+```
+
+Current public API route identifiers:
+
+```txt
+/api/crypto/global              X-API-Route: crypto-global
+/api/crypto/[id]/market-chart   X-API-Route: crypto-market-chart
+/api/crypto/[id]/ohlc           X-API-Route: crypto-ohlc-chart
+/api/weather                    X-API-Route: weather-forecast
+```
+
+Current public API data-source identifiers:
+
+```txt
+CoinGecko APIs     X-Data-Source: coingecko
+Open-Meteo API     X-Data-Source: open-meteo
+```
+
+Current cache scope:
+
+```txt
+X-Cache-Scope: shared-data-service
+```
+
+Public API responses currently use:
+
+```txt
+Cache-Control: no-store
+```
+
+This is intentional because Redis is the controlled cache layer. Browser/CDN caching is not relied on for these JSON endpoints.
 
 ---
 
@@ -167,6 +232,37 @@ Weather forecast data     1800 seconds
 
 The public API routes still apply request-based rate limiting before returning uncached or freshly generated responses where appropriate.
 Server-rendered pages benefit from the same Redis-backed cache layer without going through internal HTTP calls.
+
+The public API routes also expose standardized observability headers for cache state, upstream source, route identity and rate-limit state.
+
+Example successful cached response headers:
+
+```txt
+X-API-Route: crypto-global
+X-Data-Source: coingecko
+X-Cache: HIT
+X-Cache-TTL: 60
+X-Cache-Scope: shared-data-service
+Cache-Control: no-store
+```
+
+Example uncached response with rate-limit headers:
+
+```txt
+X-API-Route: crypto-market-chart
+X-Data-Source: coingecko
+X-Cache: MISS
+X-Cache-TTL: 300
+X-Cache-Scope: shared-data-service
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 59
+X-RateLimit-Reset: 1779360000000
+X-RateLimit-Policy: market-data-api
+X-RateLimit-Window: 1m
+Cache-Control: no-store
+```
+
+This keeps runtime behavior transparent without exposing secrets or internal credentials.
 
 ---
 
@@ -456,7 +552,38 @@ Crypto market data APIs   60 requests / minute / client identifier
 General public APIs       120 requests / minute / client identifier
 ```
 
+Current public API rate-limit policies:
+
+```txt
+market-data-api   CoinGecko-backed market data endpoints
+public-api        General public API endpoints
+```
+
+Current public API rate-limit window header:
+
+```txt
+X-RateLimit-Window: 1m
+```
+
 Client identifiers are derived from forwarded IP headers and hashed before use.
+
+Public API cache and rate-limit observability is exposed through standardized response headers:
+
+```txt
+X-API-Route
+X-Data-Source
+X-Cache
+X-Cache-TTL
+X-Cache-Scope
+X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+X-RateLimit-Policy
+X-RateLimit-Window
+Cache-Control
+```
+
+These headers are designed for debugging, operational visibility and integration clarity. They do not expose secrets or raw client identifiers.
 
 ---
 

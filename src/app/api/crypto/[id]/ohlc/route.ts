@@ -10,6 +10,7 @@ import {
   fetchAndCacheCoinOhlcChart,
   readCachedCoinOhlcChart,
 } from "@/lib/data/coin-ohlc-chart";
+import type { CacheStatus } from "@/lib/cache";
 import type { CryptoChartDays } from "@/lib/types/crypto";
 
 interface OhlcRouteContext {
@@ -18,7 +19,22 @@ interface OhlcRouteContext {
   }>;
 }
 
+const API_ROUTE = "crypto-ohlc-chart";
+const DATA_SOURCE = "coingecko";
+const CACHE_SCOPE = "shared-data-service";
+const RATE_LIMIT_POLICY = "market-data-api";
+const RATE_LIMIT_WINDOW = "1m";
 const ALLOWED_DAYS: CryptoChartDays[] = [7, 30, 90];
+
+function createRouteCacheHeaders(cacheStatus: CacheStatus, ttlSeconds: number) {
+  return createCacheHeaders({
+    cacheStatus,
+    ttlSeconds,
+    dataSource: DATA_SOURCE,
+    cacheScope: CACHE_SCOPE,
+    apiRoute: API_ROUTE,
+  });
+}
 
 function parseChartDays(value: string | null): CryptoChartDays {
   const parsed = Number(value ?? 7);
@@ -40,7 +56,13 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
   if (!normalizedId) {
     return NextResponse.json(
       { error: "Missing coin id." },
-      { status: 400 },
+      {
+        status: 400,
+        headers: createRouteCacheHeaders(
+          "MISS",
+          COIN_OHLC_CHART_CACHE_TTL_SECONDS,
+        ),
+      },
     );
   }
 
@@ -48,10 +70,10 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
 
   if (cached.data) {
     return NextResponse.json(cached.data, {
-      headers: createCacheHeaders({
-        cacheStatus: cached.status,
-        ttlSeconds: COIN_OHLC_CHART_CACHE_TTL_SECONDS,
-      }),
+      headers: createRouteCacheHeaders(
+        cached.status,
+        COIN_OHLC_CHART_CACHE_TTL_SECONDS,
+      ),
     });
   }
 
@@ -62,7 +84,10 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
     const rateLimit = getMarketDataRateLimit();
     const rateLimitResult = await rateLimit.limit(identifier);
 
-    rateLimitHeaders = createRateLimitHeaders(rateLimitResult);
+    rateLimitHeaders = createRateLimitHeaders(rateLimitResult, {
+      policy: RATE_LIMIT_POLICY,
+      window: RATE_LIMIT_WINDOW,
+    });
 
     if (!rateLimitResult.success) {
       return NextResponse.json(
@@ -72,10 +97,10 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
         {
           status: 429,
           headers: mergeHeaders(
-            createCacheHeaders({
-              cacheStatus: cached.status,
-              ttlSeconds: COIN_OHLC_CHART_CACHE_TTL_SECONDS,
-            }),
+            createRouteCacheHeaders(
+              cached.status,
+              COIN_OHLC_CHART_CACHE_TTL_SECONDS,
+            ),
             rateLimitHeaders,
           ),
         },
@@ -94,10 +119,7 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
 
     return NextResponse.json(result.data, {
       headers: mergeHeaders(
-        createCacheHeaders({
-          cacheStatus: result.cacheStatus,
-          ttlSeconds: result.cacheTtlSeconds,
-        }),
+        createRouteCacheHeaders(result.cacheStatus, result.cacheTtlSeconds),
         rateLimitHeaders,
       ),
     });
@@ -109,10 +131,10 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
       {
         status: 502,
         headers: mergeHeaders(
-          createCacheHeaders({
-            cacheStatus: cached.status,
-            ttlSeconds: COIN_OHLC_CHART_CACHE_TTL_SECONDS,
-          }),
+          createRouteCacheHeaders(
+            cached.status,
+            COIN_OHLC_CHART_CACHE_TTL_SECONDS,
+          ),
           rateLimitHeaders,
         ),
       },

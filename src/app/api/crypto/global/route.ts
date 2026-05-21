@@ -10,16 +10,33 @@ import {
   fetchAndCacheCryptoGlobalData,
   readCachedCryptoGlobalData,
 } from "@/lib/data/crypto-global";
+import type { CacheStatus } from "@/lib/cache";
+
+const API_ROUTE = "crypto-global";
+const DATA_SOURCE = "coingecko";
+const CACHE_SCOPE = "shared-data-service";
+const RATE_LIMIT_POLICY = "market-data-api";
+const RATE_LIMIT_WINDOW = "1m";
+
+function createRouteCacheHeaders(cacheStatus: CacheStatus, ttlSeconds: number) {
+  return createCacheHeaders({
+    cacheStatus,
+    ttlSeconds,
+    dataSource: DATA_SOURCE,
+    cacheScope: CACHE_SCOPE,
+    apiRoute: API_ROUTE,
+  });
+}
 
 export async function GET(request: Request) {
   const cached = await readCachedCryptoGlobalData();
 
   if (cached.data) {
     return NextResponse.json(cached.data, {
-      headers: createCacheHeaders({
-        cacheStatus: cached.status,
-        ttlSeconds: CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
-      }),
+      headers: createRouteCacheHeaders(
+        cached.status,
+        CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
+      ),
     });
   }
 
@@ -30,7 +47,10 @@ export async function GET(request: Request) {
     const rateLimit = getMarketDataRateLimit();
     const rateLimitResult = await rateLimit.limit(identifier);
 
-    rateLimitHeaders = createRateLimitHeaders(rateLimitResult);
+    rateLimitHeaders = createRateLimitHeaders(rateLimitResult, {
+      policy: RATE_LIMIT_POLICY,
+      window: RATE_LIMIT_WINDOW,
+    });
 
     if (!rateLimitResult.success) {
       return NextResponse.json(
@@ -40,10 +60,10 @@ export async function GET(request: Request) {
         {
           status: 429,
           headers: mergeHeaders(
-            createCacheHeaders({
-              cacheStatus: cached.status,
-              ttlSeconds: CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
-            }),
+            createRouteCacheHeaders(
+              cached.status,
+              CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
+            ),
             rateLimitHeaders,
           ),
         },
@@ -58,10 +78,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(result.data, {
       headers: mergeHeaders(
-        createCacheHeaders({
-          cacheStatus: result.cacheStatus,
-          ttlSeconds: result.cacheTtlSeconds,
-        }),
+        createRouteCacheHeaders(result.cacheStatus, result.cacheTtlSeconds),
         rateLimitHeaders,
       ),
     });
@@ -75,10 +92,10 @@ export async function GET(request: Request) {
       {
         status: 502,
         headers: mergeHeaders(
-          createCacheHeaders({
-            cacheStatus: cached.status,
-            ttlSeconds: CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
-          }),
+          createRouteCacheHeaders(
+            cached.status,
+            CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
+          ),
           rateLimitHeaders,
         ),
       },
