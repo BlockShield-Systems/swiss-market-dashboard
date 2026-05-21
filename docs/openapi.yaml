@@ -1,0 +1,839 @@
+openapi: 3.1.0
+info:
+  title: Swiss Market Dashboard Public API
+  version: 1.0.0
+  summary: Public API contract for Swiss Market Dashboard market and weather endpoints.
+  description: |
+    Swiss Market Dashboard exposes public JSON endpoints for global crypto market data,
+    Swiss weather forecasts, crypto market chart data and crypto OHLC data.
+
+    The public API is designed around server-side provider access, Redis-backed shared
+    cached data services, rate limiting on uncached paths, stable JSON response shapes
+    and observable response headers.
+
+    AI execution is intentionally not part of this public OpenAPI contract. The
+    AI-ready route exists separately and remains protected by a server-side feature flag.
+
+  license:
+    name: Project repository
+    url: https://github.com/BlockShield-Systems/swiss-market-dashboard
+
+servers:
+  - url: https://dashboard.ai-techart.com
+    description: Production deployment
+
+tags:
+  - name: Crypto
+    description: Crypto market data endpoints backed by CoinGecko.
+  - name: Weather
+    description: Swiss weather forecast endpoints backed by Open-Meteo.
+  - name: Runtime Observability
+    description: Standardized cache, data-source and rate-limit response headers.
+
+paths:
+  /api/crypto/global:
+    get:
+      tags:
+        - Crypto
+        - Runtime Observability
+      operationId: getCryptoGlobal
+      summary: Get global crypto market data.
+      description: |
+        Returns normalized global crypto market data in CHF.
+
+        This endpoint uses a shared Redis-backed data service. Cached responses can be
+        returned without evaluating the public rate-limit path. Uncached responses are
+        rate-limited before upstream provider access.
+
+        The endpoint exposes cache and data-source observability headers.
+      responses:
+        "200":
+          description: Global crypto market data.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+            X-RateLimit-Policy:
+              $ref: "#/components/headers/XRateLimitPolicy"
+            X-RateLimit-Window:
+              $ref: "#/components/headers/XRateLimitWindow"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CryptoGlobalData"
+              examples:
+                success:
+                  value:
+                    active_cryptocurrencies: 12000
+                    market_cap_percentage:
+                      btc: 54.3
+                      eth: 17.2
+                    total_market_cap_chf: 2500000000000
+                    total_volume_chf: 90000000000
+        "429":
+          $ref: "#/components/responses/TooManyMarketDataRequests"
+        "502":
+          description: Upstream crypto market data could not be fetched.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+            X-RateLimit-Policy:
+              $ref: "#/components/headers/XRateLimitPolicy"
+            X-RateLimit-Window:
+              $ref: "#/components/headers/XRateLimitWindow"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                upstreamFailure:
+                  value:
+                    error: Failed to fetch crypto market data.
+
+  /api/weather:
+    get:
+      tags:
+        - Weather
+        - Runtime Observability
+      operationId: getWeatherForecast
+      summary: Get a Swiss city weather forecast.
+      description: |
+        Returns a seven-day Swiss weather forecast for a supported city key.
+
+        If no city key is provided, the endpoint defaults to Zurich.
+
+        Cached responses can be returned without evaluating the public rate-limit path.
+        Uncached responses are rate-limited before upstream provider access.
+      parameters:
+        - $ref: "#/components/parameters/CityKey"
+      responses:
+        "200":
+          description: Weather forecast data.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+            X-RateLimit-Policy:
+              $ref: "#/components/headers/XRateLimitPolicy"
+            X-RateLimit-Window:
+              $ref: "#/components/headers/XRateLimitWindow"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherData"
+              examples:
+                zurich:
+                  value:
+                    daily:
+                      time:
+                        - "2026-05-21"
+                        - "2026-05-22"
+                      weather_code:
+                        - 1
+                        - 2
+                      temperature_2m_max:
+                        - 22.5
+                        - 23.1
+                      temperature_2m_min:
+                        - 12.4
+                        - 13.2
+                      precipitation_sum:
+                        - 0
+                        - 1.5
+                      wind_speed_10m_max:
+                        - 15
+                        - 20
+        "400":
+          description: Invalid city key.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidCity:
+                  value:
+                    error: Invalid city key
+        "429":
+          $ref: "#/components/responses/TooManyPublicApiRequests"
+        "502":
+          description: Weather forecast could not be fetched.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+            X-RateLimit-Policy:
+              $ref: "#/components/headers/XRateLimitPolicy"
+            X-RateLimit-Window:
+              $ref: "#/components/headers/XRateLimitWindow"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                upstreamFailure:
+                  value:
+                    error: Failed to fetch weather forecast
+
+  /api/crypto/{id}/market-chart:
+    get:
+      tags:
+        - Crypto
+        - Runtime Observability
+      operationId: getCryptoMarketChart
+      summary: Get market chart data for a crypto asset.
+      description: |
+        Returns normalized market chart points for a crypto asset.
+
+        Supported day windows are 7, 30 and 90. Invalid day values are not rejected;
+        they fall back to 7 days.
+
+        The coin id is normalized by trimming whitespace and converting it to lowercase.
+      parameters:
+        - $ref: "#/components/parameters/CoinId"
+        - $ref: "#/components/parameters/ChartDays"
+      responses:
+        "200":
+          description: Market chart data.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+            X-RateLimit-Policy:
+              $ref: "#/components/headers/XRateLimitPolicy"
+            X-RateLimit-Window:
+              $ref: "#/components/headers/XRateLimitWindow"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketChartPoint"
+              examples:
+                bitcoin:
+                  value:
+                    - timestamp: 1700000000000
+                      date: "2023-11-14T22:13:20.000Z"
+                      price: 42000
+                      marketCap: 800000000
+                      volume: 50000000
+        "400":
+          description: Missing coin id.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missingCoin:
+                  value:
+                    error: Missing coin id.
+        "429":
+          $ref: "#/components/responses/TooManyMarketDataRequests"
+        "502":
+          description: Market chart data could not be loaded.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+            X-RateLimit-Policy:
+              $ref: "#/components/headers/XRateLimitPolicy"
+            X-RateLimit-Window:
+              $ref: "#/components/headers/XRateLimitWindow"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                upstreamFailure:
+                  value:
+                    error: Coin market chart could not be loaded.
+
+  /api/crypto/{id}/ohlc:
+    get:
+      tags:
+        - Crypto
+        - Runtime Observability
+      operationId: getCryptoOhlc
+      summary: Get OHLC chart data for a crypto asset.
+      description: |
+        Returns normalized OHLC/candlestick data for a crypto asset.
+
+        Supported day windows are 7, 30 and 90. Invalid day values are not rejected;
+        they fall back to 7 days.
+
+        The coin id is normalized by trimming whitespace and converting it to lowercase.
+      parameters:
+        - $ref: "#/components/parameters/CoinId"
+        - $ref: "#/components/parameters/ChartDays"
+      responses:
+        "200":
+          description: OHLC chart data.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+            X-RateLimit-Policy:
+              $ref: "#/components/headers/XRateLimitPolicy"
+            X-RateLimit-Window:
+              $ref: "#/components/headers/XRateLimitWindow"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OhlcPoint"
+              examples:
+                bitcoin:
+                  value:
+                    - timestamp: 1700000000000
+                      date: "2023-11-14T22:13:20.000Z"
+                      open: 41000
+                      high: 43000
+                      low: 40000
+                      close: 42000
+        "400":
+          description: Missing coin id.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missingCoin:
+                  value:
+                    error: Missing coin id.
+        "429":
+          $ref: "#/components/responses/TooManyMarketDataRequests"
+        "502":
+          description: OHLC chart data could not be loaded.
+          headers:
+            X-API-Route:
+              $ref: "#/components/headers/XAPIRoute"
+            X-Data-Source:
+              $ref: "#/components/headers/XDataSource"
+            X-Cache:
+              $ref: "#/components/headers/XCache"
+            X-Cache-TTL:
+              $ref: "#/components/headers/XCacheTTL"
+            X-Cache-Scope:
+              $ref: "#/components/headers/XCacheScope"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+            X-RateLimit-Policy:
+              $ref: "#/components/headers/XRateLimitPolicy"
+            X-RateLimit-Window:
+              $ref: "#/components/headers/XRateLimitWindow"
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                upstreamFailure:
+                  value:
+                    error: Coin OHLC chart could not be loaded.
+
+components:
+  parameters:
+    CityKey:
+      name: key
+      in: query
+      required: false
+      description: |
+        Swiss city key. Defaults to `zurich` when omitted.
+      schema:
+        type: string
+        default: zurich
+        enum:
+          - zurich
+          - bern
+          - geneva
+          - basel
+          - lausanne
+          - lucerne
+          - lugano
+          - stGallen
+          - winterthur
+          - interlaken
+          - zermatt
+          - davos
+      examples:
+        zurich:
+          value: zurich
+        bern:
+          value: bern
+        davos:
+          value: davos
+
+    CoinId:
+      name: id
+      in: path
+      required: true
+      description: |
+        CoinGecko coin id. The value is trimmed and normalized to lowercase by the route.
+      schema:
+        type: string
+        minLength: 1
+        examples:
+          - bitcoin
+
+    ChartDays:
+      name: days
+      in: query
+      required: false
+      description: |
+        Chart window in days. Supported values are 7, 30 and 90.
+        Invalid values fall back to 7.
+      schema:
+        type: integer
+        default: 7
+        enum:
+          - 7
+          - 30
+          - 90
+      examples:
+        sevenDays:
+          value: 7
+        thirtyDays:
+          value: 30
+        ninetyDays:
+          value: 90
+
+  headers:
+    XAPIRoute:
+      description: Logical route identifier.
+      schema:
+        type: string
+        examples:
+          - crypto-global
+          - weather-forecast
+          - crypto-market-chart
+          - crypto-ohlc-chart
+
+    XDataSource:
+      description: External upstream data source.
+      schema:
+        type: string
+        enum:
+          - coingecko
+          - open-meteo
+
+    XCache:
+      description: Redis cache status for the shared cached data service.
+      schema:
+        type: string
+        enum:
+          - HIT
+          - MISS
+          - SKIP
+
+    XCacheTTL:
+      description: Cache TTL in seconds for the shared cached data service.
+      schema:
+        type: integer
+        examples:
+          - 60
+          - 300
+          - 1800
+
+    XCacheScope:
+      description: Cache implementation scope.
+      schema:
+        type: string
+        enum:
+          - shared-data-service
+
+    XRateLimitLimit:
+      description: Maximum number of requests allowed in the active window.
+      schema:
+        type: integer
+        examples:
+          - 60
+          - 120
+
+    XRateLimitRemaining:
+      description: Remaining number of requests in the active window.
+      schema:
+        type: integer
+        examples:
+          - 59
+          - 0
+
+    XRateLimitReset:
+      description: Reset timestamp for the active rate-limit window.
+      schema:
+        type: integer
+        examples:
+          - 1700000000
+
+    XRateLimitPolicy:
+      description: Applied rate-limit policy.
+      schema:
+        type: string
+        enum:
+          - market-data-api
+          - public-api
+
+    XRateLimitWindow:
+      description: Human-readable rate-limit window.
+      schema:
+        type: string
+        examples:
+          - 1m
+
+    CacheControl:
+      description: Browser/CDN caching policy. Public JSON APIs currently use Redis as the controlled cache layer.
+      schema:
+        type: string
+        examples:
+          - no-store
+
+  responses:
+    TooManyMarketDataRequests:
+      description: Market data API rate limit exceeded.
+      headers:
+        X-API-Route:
+          $ref: "#/components/headers/XAPIRoute"
+        X-Data-Source:
+          $ref: "#/components/headers/XDataSource"
+        X-Cache:
+          $ref: "#/components/headers/XCache"
+        X-Cache-TTL:
+          $ref: "#/components/headers/XCacheTTL"
+        X-Cache-Scope:
+          $ref: "#/components/headers/XCacheScope"
+        X-RateLimit-Limit:
+          $ref: "#/components/headers/XRateLimitLimit"
+        X-RateLimit-Remaining:
+          $ref: "#/components/headers/XRateLimitRemaining"
+        X-RateLimit-Reset:
+          $ref: "#/components/headers/XRateLimitReset"
+        X-RateLimit-Policy:
+          $ref: "#/components/headers/XRateLimitPolicy"
+        X-RateLimit-Window:
+          $ref: "#/components/headers/XRateLimitWindow"
+        Cache-Control:
+          $ref: "#/components/headers/CacheControl"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            tooManyRequests:
+              value:
+                error: Too many market data requests. Please try again later.
+
+    TooManyPublicApiRequests:
+      description: Public API rate limit exceeded.
+      headers:
+        X-API-Route:
+          $ref: "#/components/headers/XAPIRoute"
+        X-Data-Source:
+          $ref: "#/components/headers/XDataSource"
+        X-Cache:
+          $ref: "#/components/headers/XCache"
+        X-Cache-TTL:
+          $ref: "#/components/headers/XCacheTTL"
+        X-Cache-Scope:
+          $ref: "#/components/headers/XCacheScope"
+        X-RateLimit-Limit:
+          $ref: "#/components/headers/XRateLimitLimit"
+        X-RateLimit-Remaining:
+          $ref: "#/components/headers/XRateLimitRemaining"
+        X-RateLimit-Reset:
+          $ref: "#/components/headers/XRateLimitReset"
+        X-RateLimit-Policy:
+          $ref: "#/components/headers/XRateLimitPolicy"
+        X-RateLimit-Window:
+          $ref: "#/components/headers/XRateLimitWindow"
+        Cache-Control:
+          $ref: "#/components/headers/CacheControl"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            tooManyRequests:
+              value:
+                error: Too many public API requests. Please try again later.
+
+  schemas:
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    CryptoGlobalData:
+      type: object
+      additionalProperties: false
+      required:
+        - active_cryptocurrencies
+        - market_cap_percentage
+        - total_market_cap_chf
+        - total_volume_chf
+      properties:
+        active_cryptocurrencies:
+          type: integer
+          minimum: 0
+        market_cap_percentage:
+          type: object
+          additionalProperties:
+            type: number
+        total_market_cap_chf:
+          type: number
+          minimum: 0
+        total_volume_chf:
+          type: number
+          minimum: 0
+
+    WeatherData:
+      type: object
+      additionalProperties: true
+      required:
+        - daily
+      properties:
+        daily:
+          type: object
+          additionalProperties: false
+          required:
+            - time
+            - weather_code
+            - temperature_2m_max
+            - temperature_2m_min
+            - precipitation_sum
+            - wind_speed_10m_max
+          properties:
+            time:
+              type: array
+              items:
+                type: string
+                format: date
+            weather_code:
+              type: array
+              items:
+                type: integer
+            temperature_2m_max:
+              type: array
+              items:
+                type: number
+            temperature_2m_min:
+              type: array
+              items:
+                type: number
+            precipitation_sum:
+              type: array
+              items:
+                type: number
+            wind_speed_10m_max:
+              type: array
+              items:
+                type: number
+        daily_units:
+          type: object
+          additionalProperties:
+            type: string
+
+    MarketChartPoint:
+      type: object
+      additionalProperties: false
+      required:
+        - timestamp
+        - date
+        - price
+        - marketCap
+        - volume
+      properties:
+        timestamp:
+          type: integer
+          description: Unix timestamp in milliseconds.
+        date:
+          type: string
+          format: date-time
+        price:
+          type: number
+        marketCap:
+          type:
+            - number
+            - "null"
+        volume:
+          type:
+            - number
+            - "null"
+
+    OhlcPoint:
+      type: object
+      additionalProperties: false
+      required:
+        - timestamp
+        - date
+        - open
+        - high
+        - low
+        - close
+      properties:
+        timestamp:
+          type: integer
+          description: Unix timestamp in milliseconds.
+        date:
+          type: string
+          format: date-time
+        open:
+          type: number
+        high:
+          type: number
+        low:
+          type: number
+        close:
+          type: number

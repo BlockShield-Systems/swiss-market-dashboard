@@ -444,8 +444,8 @@ flowchart LR
   Evidence --> Smoke["scripts/smoke-test-production.mjs"]
   Feedback --> IssueTemplate[".github/ISSUE_TEMPLATE/technical-feedback.yml"]
 
-  Diagrams --> CaseStudy["Future: docs/case-study.md"]
-  Architecture --> OpenApi["Future: docs/openapi.yaml"]
+  Diagrams --> CaseStudy["docs/case-study.md"]
+  Architecture --> OpenApi["docs/openapi.yaml"]
   Evidence --> Operations["Future: docs/operations.md"]
 ```
 
