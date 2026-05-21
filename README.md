@@ -114,10 +114,12 @@ Implemented AI infrastructure:
 
 Upstash Redis is integrated for:
 
+- public API response caching
+- public API rate limiting
 - AI route rate limiting
 - AI response cache
-- future public API request counters
-- future API abuse prevention
+- short-lived operational counters
+- abuse-prevention infrastructure
 
 Current AI limit:
 

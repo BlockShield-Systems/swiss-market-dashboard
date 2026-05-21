@@ -181,8 +181,8 @@ export type Dictionary = {
     themeTitle: string;
     themeText: string;
     summaryTitle: string;
-    recruiterNoteTitle: string;
-    recruiterNote: string;
+    implementationNoteTitle: string;
+    implementationNote: string;
   };
 };
 
@@ -191,7 +191,7 @@ const dictionaries: Record<Locale, Dictionary> = {
     site: {
       name: "AI-Techart & Dynamics Dashboard",
       description:
-        "Recruiter-taugliche technische Case Study für moderne Frontend-Architektur, Datenintegration und produktionsnahe UI-Umsetzung.",
+        "Produktionsnahes Intelligence Dashboard innerhalb des AI-Techart & Dynamics Ökosystems – mit Fokus auf Marktdaten, Wetterinformationen, persistente Insights und moderne Plattform-Architektur.",
     },
     common: {
       language: "Sprache",
@@ -430,7 +430,7 @@ const dictionaries: Record<Locale, Dictionary> = {
     about: {
       title: "Über dieses Dashboard",
       description:
-        "Recruiter-taugliche Case Study innerhalb des AI-Techart & Dynamics Ökosystems – mit Fokus auf Frontend-Architektur, Datenintegration und produktionsnahe Umsetzung.",
+        "Produktionsnahes Intelligence Dashboard innerhalb des AI-Techart & Dynamics Ökosystems – mit Fokus auf Marktdaten, Wetterinformationen, persistente Insights und moderne Plattform-Architektur.",
       websiteLabel: "Hauptseite",
       repositoryLabel: "Dashboard Repository",
       repositoryPendingLabel: "Repository folgt",
@@ -447,8 +447,8 @@ const dictionaries: Record<Locale, Dictionary> = {
       themeText:
         "Steuert die visuelle Darstellung über das gesamte Dashboard hinweg.",
       summaryTitle: "Zusammenfassung",
-      recruiterNoteTitle: "Portfolio-Hinweis",
-      recruiterNote:
+      implementationNoteTitle: "Implementierungsnotiz",
+      implementationNote:
         "Diese Implementierung ist bewusst robust gehalten: Cookie-basierte Sprache für SSR-Konsistenz, lokales Branding und klar getrennte Präferenzlogik statt verteilter Hardcoded-Strings.",
     },
   },
@@ -457,7 +457,7 @@ const dictionaries: Record<Locale, Dictionary> = {
     site: {
       name: "AI-Techart & Dynamics Dashboard",
       description:
-        "Recruiter-ready technical case study for modern frontend architecture, data integration and production-oriented UI delivery.",
+        "Production-oriented intelligence dashboard for crypto market data, Swiss weather information, persistent insights, Redis caching, rate limiting, and AI-ready platform infrastructure.",
     },
     common: {
       language: "Language",
@@ -696,7 +696,7 @@ const dictionaries: Record<Locale, Dictionary> = {
     about: {
       title: "About this Dashboard",
       description:
-        "Recruiter-ready case study within the AI-Techart & Dynamics ecosystem, focused on frontend architecture, data integration and production-oriented implementation.",
+        "Production-oriented intelligence dashboard within the AI-Techart & Dynamics ecosystem, focused on market data, weather information, persistent insights, and modern platform architecture.",
       websiteLabel: "Main website",
       repositoryLabel: "Dashboard repository",
       repositoryPendingLabel: "Repository coming soon",
@@ -713,9 +713,9 @@ const dictionaries: Record<Locale, Dictionary> = {
       themeText:
         "Controls the visual appearance across the entire dashboard.",
       summaryTitle: "Summary",
-      recruiterNoteTitle: "Portfolio Note",
-      recruiterNote:
-        "This implementation is intentionally robust: cookie-based language for SSR consistency, local branding assets and cleanly separated preference logic instead of scattered hardcoded strings.",
+      implementationNoteTitle: "Implementation Note",
+      implementationNote:
+        "This implementation is intentionally robust: cookie-based language for SSR consistency, local branding assets, and clearly separated preference logic instead of scattered hardcoded strings.",
     },
   },
 };

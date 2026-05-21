@@ -81,9 +81,9 @@ export default async function SettingsPage() {
 
           <div className="rounded-xl border bg-muted/20 p-4">
             <h2 className="text-sm font-semibold text-foreground">
-              {t.settings.recruiterNoteTitle}
+              {t.settings.implementationNoteTitle}
             </h2>
-            <p className="mt-2">{t.settings.recruiterNote}</p>
+            <p className="mt-2">{t.settings.implementationNote}</p>
           </div>
         </CardContent>
       </Card>

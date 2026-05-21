@@ -22,7 +22,7 @@ export const SITE_CONFIG = {
   name: "AI-Techart & Dynamics Dashboard",
   shortName: "AI-Techart & Dynamics",
   description:
-    "Technical dashboard case study focused on modern frontend architecture, data integration and recruiter-ready product delivery.",
+    "Production-oriented intelligence dashboard for crypto market data, Swiss weather information, persistent insights, Redis caching, rate limiting, and AI-ready platform infrastructure.",
   url: "https://dashboard.ai-techart.com",
   primaryWebsiteUrl: "https://ai-techart.com",
   author: "Demian Lienert",
