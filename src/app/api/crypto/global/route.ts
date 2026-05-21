@@ -1,35 +1,24 @@
 import { NextResponse } from "next/server";
-import { fetchCryptoGlobalData } from "@/lib/api/coingecko";
-import {
-  createCacheHeaders,
-  getCachedJson,
-  mergeHeaders,
-  setCachedJson,
-} from "@/lib/cache";
+import { createCacheHeaders, mergeHeaders } from "@/lib/cache";
 import {
   createRateLimitHeaders,
   getMarketDataRateLimit,
 } from "@/lib/public-api-rate-limit";
 import { getClientIdentifier } from "@/lib/request-ip";
-
-const CACHE_KEY = "public-api:crypto:global:v1";
-const CACHE_TTL_SECONDS = 60;
-
-type CryptoGlobalApiResponse = {
-  active_cryptocurrencies: number;
-  market_cap_percentage: Record<string, number>;
-  total_market_cap_chf: number;
-  total_volume_chf: number;
-};
+import {
+  CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
+  fetchAndCacheCryptoGlobalData,
+  readCachedCryptoGlobalData,
+} from "@/lib/data/crypto-global";
 
 export async function GET(request: Request) {
-  const cached = await getCachedJson<CryptoGlobalApiResponse>(CACHE_KEY);
+  const cached = await readCachedCryptoGlobalData();
 
   if (cached.data) {
     return NextResponse.json(cached.data, {
       headers: createCacheHeaders({
         cacheStatus: cached.status,
-        ttlSeconds: CACHE_TTL_SECONDS,
+        ttlSeconds: CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
       }),
     });
   }
@@ -53,7 +42,7 @@ export async function GET(request: Request) {
           headers: mergeHeaders(
             createCacheHeaders({
               cacheStatus: cached.status,
-              ttlSeconds: CACHE_TTL_SECONDS,
+              ttlSeconds: CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
             }),
             rateLimitHeaders,
           ),
@@ -65,26 +54,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    const data = await fetchCryptoGlobalData();
+    const result = await fetchAndCacheCryptoGlobalData(cached.status);
 
-    const responseBody: CryptoGlobalApiResponse = {
-      active_cryptocurrencies: data.data.active_cryptocurrencies,
-      market_cap_percentage: data.data.market_cap_percentage,
-      total_market_cap_chf: data.data.total_market_cap.chf,
-      total_volume_chf: data.data.total_volume.chf,
-    };
-
-    await setCachedJson({
-      key: CACHE_KEY,
-      data: responseBody,
-      ttlSeconds: CACHE_TTL_SECONDS,
-    });
-
-    return NextResponse.json(responseBody, {
+    return NextResponse.json(result.data, {
       headers: mergeHeaders(
         createCacheHeaders({
-          cacheStatus: cached.status,
-          ttlSeconds: CACHE_TTL_SECONDS,
+          cacheStatus: result.cacheStatus,
+          ttlSeconds: result.cacheTtlSeconds,
         }),
         rateLimitHeaders,
       ),
@@ -101,7 +77,7 @@ export async function GET(request: Request) {
         headers: mergeHeaders(
           createCacheHeaders({
             cacheStatus: cached.status,
-            ttlSeconds: CACHE_TTL_SECONDS,
+            ttlSeconds: CRYPTO_GLOBAL_CACHE_TTL_SECONDS,
           }),
           rateLimitHeaders,
         ),

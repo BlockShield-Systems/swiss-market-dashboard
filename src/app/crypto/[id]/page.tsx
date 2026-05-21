@@ -7,7 +7,8 @@ import { ExpandableDescription } from "@/components/crypto/expandable-descriptio
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchCoinDetails, fetchCoinMarketChart } from "@/lib/api/coingecko";
+import { fetchCoinDetails } from "@/lib/api/coingecko";
+import { getCachedCoinMarketChart } from "@/lib/data/coin-market-chart";
 import { defaultCryptoChartMode } from "@/lib/flags";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
@@ -184,11 +185,15 @@ export default async function CoinDetailPage({ params }: CoinDetailPageProps) {
   let initialChartMode: CryptoChartMode;
 
   try {
-    [coin, chartData, initialChartMode] = await Promise.all([
+    const [coinDetails, chartResult, chartMode] = await Promise.all([
       fetchCoinDetails(id),
-      fetchCoinMarketChart(id, 7),
+      getCachedCoinMarketChart(id, 7),
       defaultCryptoChartMode(),
     ]);
+
+    coin = coinDetails;
+    chartData = chartResult.data;
+    initialChartMode = chartMode;
   } catch (err) {
     console.error("Failed to load coin detail page:", err);
 

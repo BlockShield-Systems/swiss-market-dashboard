@@ -28,6 +28,8 @@ Vercel Edge / CDN
 Next.js Application
   |
   +-- App Router Pages
+  |     |
+  |     +-- Shared Cached Data Services
   |
   +-- Server Components
   |
@@ -35,12 +37,20 @@ Next.js Application
   |
   +-- Route Handlers
         |
-        +-- CoinGecko API
-        +-- Open-Meteo API
+        +-- Shared Cached Data Services
         +-- Neon Postgres
         +-- Upstash Redis
         +-- Vercel AI Gateway
+
+Shared Cached Data Services
+  |
+  +-- Upstash Redis cache
+  +-- CoinGecko API
+  +-- Open-Meteo API
 ```
+
+The architecture avoids duplicated external API access for shared market and weather data.
+Server-rendered pages and public API routes now use the same cached data service modules.
 
 ---
 
@@ -102,6 +112,61 @@ Responsibilities:
 - support feature flags
 - apply Redis-backed caching and rate limiting where appropriate
 - return stable JSON contracts to the frontend
+
+---
+
+## Shared Cached Data Services
+
+Shared cached data services centralize Redis-backed data access for frequently requested market and weather data.
+
+The goal is to avoid duplicated fetch logic between server-rendered pages and public API routes.
+
+Current shared cached data service files:
+
+```txt
+src/lib/data/crypto-global.ts
+src/lib/data/weather-forecast.ts
+src/lib/data/coin-market-chart.ts
+src/lib/data/coin-ohlc-chart.ts
+```
+
+Current usage:
+
+```txt
+Server-rendered pages
+  |
+  v
+Shared cached data services
+  |
+  v
+Redis cache
+  |
+  v
+External API helper
+
+Public API routes
+  |
+  v
+Shared cached data services
+  |
+  v
+Redis cache
+  |
+  v
+External API helper
+```
+
+Current cache TTLs:
+
+```txt
+Crypto global data        60 seconds
+Coin market chart data    300 seconds
+Coin OHLC chart data      300 seconds
+Weather forecast data     1800 seconds
+```
+
+The public API routes still apply request-based rate limiting before returning uncached or freshly generated responses where appropriate.
+Server-rendered pages benefit from the same Redis-backed cache layer without going through internal HTTP calls.
 
 ---
 
@@ -321,6 +386,7 @@ en
 
 Upstash Redis is used for:
 
+- shared cached data services
 - public API response caching
 - public API rate limiting
 - AI route rate limiting
@@ -328,7 +394,7 @@ Upstash Redis is used for:
 - short-lived operational counters
 - abuse-prevention infrastructure
 
-Files:
+Core Redis utility files:
 
 ```txt
 src/lib/redis.ts
@@ -338,29 +404,49 @@ src/lib/request-ip.ts
 src/lib/cache.ts
 ```
 
-Current rate limit:
+Shared cached data service files:
+
+```txt
+src/lib/data/crypto-global.ts
+src/lib/data/weather-forecast.ts
+src/lib/data/coin-market-chart.ts
+src/lib/data/coin-ohlc-chart.ts
+```
+
+Current AI rate limit:
 
 ```txt
 5 AI summary requests / 10 minutes / client identifier
 ```
 
-Cache TTL:
+AI cache TTL:
 
 ```txt
 30 minutes
 ```
 
-Cache key format:
+AI cache key format:
 
 ```txt
 ai-summary:{locale}:{coinId}
 ```
+
+Public API cache TTLs:
 
 ```txt
 /api/crypto/global              60 seconds
 /api/crypto/[id]/market-chart   300 seconds
 /api/crypto/[id]/ohlc           300 seconds
 /api/weather                    1800 seconds
+```
+
+Shared cached data service TTLs:
+
+```txt
+Crypto global data        60 seconds
+Coin market chart data    300 seconds
+Coin OHLC chart data      300 seconds
+Weather forecast data     1800 seconds
 ```
 
 Public API rate limits:

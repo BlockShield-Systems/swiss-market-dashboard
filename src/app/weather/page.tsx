@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Info } from "lucide-react";
 import { WeatherForecastChart } from "@/components/weather/weather-forecast-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchWeatherForecast } from "@/lib/api/openmeteo";
+import { getCachedWeatherForecast } from "@/lib/data/weather-forecast";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
 import { DEFAULT_SWISS_CITY } from "@/lib/types/weather";
@@ -21,7 +21,9 @@ export default async function WeatherPage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
 
-  const initialData = await fetchWeatherForecast(DEFAULT_SWISS_CITY);
+  const initialWeatherResult = await getCachedWeatherForecast(
+    DEFAULT_SWISS_CITY,
+  );
 
   const legendItems = [
     t.weather.legend.temperature,
@@ -75,7 +77,7 @@ export default async function WeatherPage() {
         </CardContent>
       </Card>
 
-      <WeatherForecastChart initialData={initialData} />
+      <WeatherForecastChart initialData={initialWeatherResult.data} />
     </div>
   );
 }

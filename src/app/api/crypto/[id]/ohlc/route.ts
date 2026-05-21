@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
-import { fetchCoinOhlcChart } from "@/lib/api/coingecko";
-import {
-  createCacheHeaders,
-  getCachedJson,
-  mergeHeaders,
-  setCachedJson,
-} from "@/lib/cache";
+import { createCacheHeaders, mergeHeaders } from "@/lib/cache";
 import {
   createRateLimitHeaders,
   getMarketDataRateLimit,
 } from "@/lib/public-api-rate-limit";
 import { getClientIdentifier } from "@/lib/request-ip";
+import {
+  COIN_OHLC_CHART_CACHE_TTL_SECONDS,
+  fetchAndCacheCoinOhlcChart,
+  readCachedCoinOhlcChart,
+} from "@/lib/data/coin-ohlc-chart";
 import type { CryptoChartDays } from "@/lib/types/crypto";
 
 interface OhlcRouteContext {
@@ -20,9 +19,6 @@ interface OhlcRouteContext {
 }
 
 const ALLOWED_DAYS: CryptoChartDays[] = [7, 30, 90];
-const CACHE_TTL_SECONDS = 60 * 5;
-
-type OhlcResponse = Awaited<ReturnType<typeof fetchCoinOhlcChart>>;
 
 function parseChartDays(value: string | null): CryptoChartDays {
   const parsed = Number(value ?? 7);
@@ -32,10 +28,6 @@ function parseChartDays(value: string | null): CryptoChartDays {
   }
 
   return 7;
-}
-
-function buildCacheKey(id: string, days: CryptoChartDays) {
-  return `public-api:crypto:ohlc:${id.toLowerCase()}:${days}:v1`;
 }
 
 export async function GET(request: Request, { params }: OhlcRouteContext) {
@@ -52,14 +44,13 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
     );
   }
 
-  const cacheKey = buildCacheKey(normalizedId, days);
-  const cached = await getCachedJson<OhlcResponse>(cacheKey);
+  const cached = await readCachedCoinOhlcChart(normalizedId, days);
 
   if (cached.data) {
     return NextResponse.json(cached.data, {
       headers: createCacheHeaders({
         cacheStatus: cached.status,
-        ttlSeconds: CACHE_TTL_SECONDS,
+        ttlSeconds: COIN_OHLC_CHART_CACHE_TTL_SECONDS,
       }),
     });
   }
@@ -83,7 +74,7 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
           headers: mergeHeaders(
             createCacheHeaders({
               cacheStatus: cached.status,
-              ttlSeconds: CACHE_TTL_SECONDS,
+              ttlSeconds: COIN_OHLC_CHART_CACHE_TTL_SECONDS,
             }),
             rateLimitHeaders,
           ),
@@ -95,19 +86,17 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
   }
 
   try {
-    const data = await fetchCoinOhlcChart(normalizedId, days);
+    const result = await fetchAndCacheCoinOhlcChart(
+      normalizedId,
+      days,
+      cached.status,
+    );
 
-    await setCachedJson({
-      key: cacheKey,
-      data,
-      ttlSeconds: CACHE_TTL_SECONDS,
-    });
-
-    return NextResponse.json(data, {
+    return NextResponse.json(result.data, {
       headers: mergeHeaders(
         createCacheHeaders({
-          cacheStatus: cached.status,
-          ttlSeconds: CACHE_TTL_SECONDS,
+          cacheStatus: result.cacheStatus,
+          ttlSeconds: result.cacheTtlSeconds,
         }),
         rateLimitHeaders,
       ),
@@ -122,7 +111,7 @@ export async function GET(request: Request, { params }: OhlcRouteContext) {
         headers: mergeHeaders(
           createCacheHeaders({
             cacheStatus: cached.status,
-            ttlSeconds: CACHE_TTL_SECONDS,
+            ttlSeconds: COIN_OHLC_CHART_CACHE_TTL_SECONDS,
           }),
           rateLimitHeaders,
         ),

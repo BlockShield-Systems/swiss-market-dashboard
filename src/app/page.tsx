@@ -17,8 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CurrentConditions } from "@/components/weather/current-conditions";
-import { fetchCryptoGlobalData } from "@/lib/api/coingecko";
-import { fetchWeatherForecast } from "@/lib/api/openmeteo";
+import { getCachedCryptoGlobalData } from "@/lib/data/crypto-global";
+import { getCachedWeatherForecast } from "@/lib/data/weather-forecast";
 import { marketInsightsEnabled } from "@/lib/flags";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
@@ -48,20 +48,22 @@ function formatMarketCapTrillionChf(value: number, locale: "de" | "en") {
     },
   );
 
-  return locale === "de"
-    ? `${formatted} Bio. CHF`
-    : `${formatted} T CHF`;
+  return locale === "de" ? `${formatted} Bio. CHF` : `${formatted} T CHF`;
 }
 
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
 
-  const [globalData, zurichWeather, showMarketInsights] = await Promise.all([
-    fetchCryptoGlobalData(),
-    fetchWeatherForecast(SWISS_CITIES[0]),
-    marketInsightsEnabled(),
-  ]);
+  const [cryptoGlobalResult, zurichWeatherResult, showMarketInsights] =
+    await Promise.all([
+      getCachedCryptoGlobalData(),
+      getCachedWeatherForecast(SWISS_CITIES[0]),
+      marketInsightsEnabled(),
+    ]);
+
+  const globalData = cryptoGlobalResult.data;
+  const zurichWeather = zurichWeatherResult.data;
 
   const maxTemp = zurichWeather.daily.temperature_2m_max[0];
   const minTemp = zurichWeather.daily.temperature_2m_min[0];
@@ -126,7 +128,7 @@ export default async function HomePage() {
         <StatsCard
           title={t.home.stats.marketCap}
           value={formatMarketCapTrillionChf(
-            globalData.data.total_market_cap.chf,
+            globalData.total_market_cap_chf,
             locale,
           )}
           icon={<TrendingUp className="size-5" />}
@@ -136,7 +138,7 @@ export default async function HomePage() {
         <StatsCard
           title={t.home.stats.activeCoins}
           value={formatNumberByLocale(
-            globalData.data.active_cryptocurrencies,
+            globalData.active_cryptocurrencies,
             locale,
           )}
           icon={<Globe className="size-5" />}

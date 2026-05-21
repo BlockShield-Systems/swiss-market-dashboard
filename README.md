@@ -114,12 +114,38 @@ Implemented AI infrastructure:
 
 Upstash Redis is integrated for:
 
+- shared cached data services
 - public API response caching
 - public API rate limiting
 - AI route rate limiting
 - AI response cache
 - short-lived operational counters
 - abuse-prevention infrastructure
+
+Shared cached data services are used by both server-rendered pages and public API routes:
+
+```txt
+src/lib/data/crypto-global.ts
+src/lib/data/weather-forecast.ts
+src/lib/data/coin-market-chart.ts
+src/lib/data/coin-ohlc-chart.ts
+```
+
+Current public cache TTLs:
+
+```txt
+Crypto global data        60 seconds
+Coin market chart data    300 seconds
+Coin OHLC chart data      300 seconds
+Weather forecast data     1800 seconds
+```
+
+Current public API rate limits:
+
+```txt
+Crypto market data APIs   60 requests / minute / client identifier
+General public APIs       120 requests / minute / client identifier
+```
 
 Current AI limit:
 
@@ -200,13 +226,30 @@ Next.js App Router
   |
   +--> Server Components / Client Components
   |
+  +--> Shared Cached Data Services
+  |     |
+  |     +--> Upstash Redis cache
+  |     +--> CoinGecko API
+  |     +--> Open-Meteo API
+  |
   +--> API Routes
         |
-        +--> CoinGecko API
-        +--> Open-Meteo API
+        +--> Shared Cached Data Services
         +--> Neon Postgres via Drizzle ORM
-        +--> Upstash Redis
+        +--> Upstash Redis rate limiting
         +--> Vercel AI Gateway
+```
+
+The dashboard now uses shared cached data services for market and weather data.
+Both server-rendered pages and public API routes access the same Redis-backed data layer instead of duplicating external API fetch logic.
+
+Shared cached data services:
+
+```txt
+src/lib/data/crypto-global.ts
+src/lib/data/weather-forecast.ts
+src/lib/data/coin-market-chart.ts
+src/lib/data/coin-ohlc-chart.ts
 ```
 
 Detailed architecture documentation:

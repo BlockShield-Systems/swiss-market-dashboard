@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
-import { fetchCoinMarketChart } from "@/lib/api/coingecko";
-import {
-  createCacheHeaders,
-  getCachedJson,
-  mergeHeaders,
-  setCachedJson,
-} from "@/lib/cache";
+import { createCacheHeaders, mergeHeaders } from "@/lib/cache";
 import {
   createRateLimitHeaders,
   getMarketDataRateLimit,
 } from "@/lib/public-api-rate-limit";
 import { getClientIdentifier } from "@/lib/request-ip";
+import {
+  COIN_MARKET_CHART_CACHE_TTL_SECONDS,
+  fetchAndCacheCoinMarketChart,
+  readCachedCoinMarketChart,
+} from "@/lib/data/coin-market-chart";
 import type { CryptoChartDays } from "@/lib/types/crypto";
 
 interface MarketChartRouteContext {
@@ -20,9 +19,6 @@ interface MarketChartRouteContext {
 }
 
 const ALLOWED_DAYS: CryptoChartDays[] = [7, 30, 90];
-const CACHE_TTL_SECONDS = 60 * 5;
-
-type MarketChartResponse = Awaited<ReturnType<typeof fetchCoinMarketChart>>;
 
 function parseChartDays(value: string | null): CryptoChartDays {
   const parsed = Number(value ?? 7);
@@ -32,10 +28,6 @@ function parseChartDays(value: string | null): CryptoChartDays {
   }
 
   return 7;
-}
-
-function buildCacheKey(id: string, days: CryptoChartDays) {
-  return `public-api:crypto:market-chart:${id.toLowerCase()}:${days}:v1`;
 }
 
 export async function GET(
@@ -55,14 +47,13 @@ export async function GET(
     );
   }
 
-  const cacheKey = buildCacheKey(normalizedId, days);
-  const cached = await getCachedJson<MarketChartResponse>(cacheKey);
+  const cached = await readCachedCoinMarketChart(normalizedId, days);
 
   if (cached.data) {
     return NextResponse.json(cached.data, {
       headers: createCacheHeaders({
         cacheStatus: cached.status,
-        ttlSeconds: CACHE_TTL_SECONDS,
+        ttlSeconds: COIN_MARKET_CHART_CACHE_TTL_SECONDS,
       }),
     });
   }
@@ -86,7 +77,7 @@ export async function GET(
           headers: mergeHeaders(
             createCacheHeaders({
               cacheStatus: cached.status,
-              ttlSeconds: CACHE_TTL_SECONDS,
+              ttlSeconds: COIN_MARKET_CHART_CACHE_TTL_SECONDS,
             }),
             rateLimitHeaders,
           ),
@@ -98,19 +89,17 @@ export async function GET(
   }
 
   try {
-    const data = await fetchCoinMarketChart(normalizedId, days);
+    const result = await fetchAndCacheCoinMarketChart(
+      normalizedId,
+      days,
+      cached.status,
+    );
 
-    await setCachedJson({
-      key: cacheKey,
-      data,
-      ttlSeconds: CACHE_TTL_SECONDS,
-    });
-
-    return NextResponse.json(data, {
+    return NextResponse.json(result.data, {
       headers: mergeHeaders(
         createCacheHeaders({
-          cacheStatus: cached.status,
-          ttlSeconds: CACHE_TTL_SECONDS,
+          cacheStatus: result.cacheStatus,
+          ttlSeconds: result.cacheTtlSeconds,
         }),
         rateLimitHeaders,
       ),
@@ -125,7 +114,7 @@ export async function GET(
         headers: mergeHeaders(
           createCacheHeaders({
             cacheStatus: cached.status,
-            ttlSeconds: CACHE_TTL_SECONDS,
+            ttlSeconds: COIN_MARKET_CHART_CACHE_TTL_SECONDS,
           }),
           rateLimitHeaders,
         ),

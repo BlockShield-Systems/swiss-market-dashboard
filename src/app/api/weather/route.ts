@@ -1,28 +1,19 @@
 import { NextResponse } from "next/server";
-import { fetchWeatherForecast } from "@/lib/api/openmeteo";
-import {
-  createCacheHeaders,
-  getCachedJson,
-  mergeHeaders,
-  setCachedJson,
-} from "@/lib/cache";
+import { createCacheHeaders, mergeHeaders } from "@/lib/cache";
 import {
   createRateLimitHeaders,
   getPublicApiRateLimit,
 } from "@/lib/public-api-rate-limit";
 import { getClientIdentifier } from "@/lib/request-ip";
 import {
+  fetchAndCacheWeatherForecast,
+  readCachedWeatherForecast,
+  WEATHER_FORECAST_CACHE_TTL_SECONDS,
+} from "@/lib/data/weather-forecast";
+import {
   DEFAULT_SWISS_CITY_KEY,
   getSwissCityByKey,
 } from "@/lib/types/weather";
-
-const CACHE_TTL_SECONDS = 60 * 30;
-
-type WeatherResponse = Awaited<ReturnType<typeof fetchWeatherForecast>>;
-
-function buildCacheKey(cityKey: string) {
-  return `public-api:weather:${cityKey.toLowerCase()}:v1`;
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -37,18 +28,21 @@ export async function GET(request: Request) {
       },
       {
         status: 400,
+        headers: createCacheHeaders({
+          cacheStatus: "MISS",
+          ttlSeconds: WEATHER_FORECAST_CACHE_TTL_SECONDS,
+        }),
       },
     );
   }
 
-  const cacheKey = buildCacheKey(cityKey);
-  const cached = await getCachedJson<WeatherResponse>(cacheKey);
+  const cached = await readCachedWeatherForecast(city.key);
 
   if (cached.data) {
     return NextResponse.json(cached.data, {
       headers: createCacheHeaders({
         cacheStatus: cached.status,
-        ttlSeconds: CACHE_TTL_SECONDS,
+        ttlSeconds: WEATHER_FORECAST_CACHE_TTL_SECONDS,
       }),
     });
   }
@@ -72,7 +66,7 @@ export async function GET(request: Request) {
           headers: mergeHeaders(
             createCacheHeaders({
               cacheStatus: cached.status,
-              ttlSeconds: CACHE_TTL_SECONDS,
+              ttlSeconds: WEATHER_FORECAST_CACHE_TTL_SECONDS,
             }),
             rateLimitHeaders,
           ),
@@ -84,19 +78,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    const data = await fetchWeatherForecast(city);
+    const result = await fetchAndCacheWeatherForecast(city, cached.status);
 
-    await setCachedJson({
-      key: cacheKey,
-      data,
-      ttlSeconds: CACHE_TTL_SECONDS,
-    });
-
-    return NextResponse.json(data, {
+    return NextResponse.json(result.data, {
       headers: mergeHeaders(
         createCacheHeaders({
-          cacheStatus: cached.status,
-          ttlSeconds: CACHE_TTL_SECONDS,
+          cacheStatus: result.cacheStatus,
+          ttlSeconds: result.cacheTtlSeconds,
         }),
         rateLimitHeaders,
       ),
@@ -113,7 +101,7 @@ export async function GET(request: Request) {
         headers: mergeHeaders(
           createCacheHeaders({
             cacheStatus: cached.status,
-            ttlSeconds: CACHE_TTL_SECONDS,
+            ttlSeconds: WEATHER_FORECAST_CACHE_TTL_SECONDS,
           }),
           rateLimitHeaders,
         ),
