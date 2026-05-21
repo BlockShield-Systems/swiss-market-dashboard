@@ -643,12 +643,50 @@ Quality gates before production changes
 
 ---
 
+## Public Feedback and Project Evidence
+
+Public technical feedback is welcome when it is specific, verifiable and tied to source code, documentation, production behavior or API responses.
+
+Feedback guide:
+
+```txt
+docs/feedback.md
+```
+
+Objective project evidence:
+
+```txt
+docs/project-evidence.md
+```
+
+Technical feedback can be submitted through GitHub Issues using:
+
+```txt
+.github/ISSUE_TEMPLATE/technical-feedback.yml
+```
+
+The project favors evidence that can be checked directly:
+
+```txt
+source code
+tests
+production responses
+response headers
+security headers
+smoke-test output
+documented trade-offs
+explicit feature flags
+reproducible commands
+```
+
 ## Documentation Map
 
 ```txt
 README.md                       Project overview and operational entry point
 docs/architecture.md            System architecture and runtime flows
 docs/security.md                Security controls and production headers
+docs/feedback.md                Public technical feedback guide
+docs/project-evidence.md        Objective verification and project evidence
 scripts/smoke-test-production.mjs Production smoke test runner
 ```
 

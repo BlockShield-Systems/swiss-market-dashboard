@@ -1,0 +1,97 @@
+name: Technical feedback
+description: Provide specific technical feedback about architecture, APIs, security, operations, tests or documentation.
+title: "[Technical feedback]: "
+labels:
+  - feedback
+  - technical-review
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to provide technical feedback.
+
+        Please keep the feedback specific, verifiable and connected to source code, production behavior, documentation, tests or public API responses.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the system is affected?
+      options:
+        - Architecture
+        - API design
+        - Caching
+        - Rate limiting
+        - Security headers
+        - Content-Security-Policy
+        - Feature flags
+        - AI-ready infrastructure
+        - Database / Drizzle ORM
+        - Redis
+        - Testing
+        - Production smoke test
+        - Documentation
+        - Accessibility
+        - Performance
+        - Operations
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: observation
+    attributes:
+      label: Observation
+      description: What did you notice?
+      placeholder: Describe the behavior, design choice, documentation gap or implementation detail.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Link files, routes, commands, response headers, test output or documentation sections.
+      placeholder: |
+        Example:
+        - Route: GET /api/crypto/global
+        - File: src/lib/cache.ts
+        - Command: curl -I https://dashboard.ai-techart.com/api/crypto/global
+        - Docs: docs/architecture.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Why does this matter?
+      placeholder: Explain the technical or operational impact.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: What would improve the project?
+      placeholder: Describe a concrete improvement, alternative or clarification.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      description: Confirm what you checked before opening this issue.
+      options:
+        - label: I checked the current README.
+          required: false
+        - label: I checked the relevant documentation under docs/.
+          required: false
+        - label: I checked the relevant source file or route.
+          required: false
+        - label: I checked production behavior or response headers.
+          required: false
+        - label: I can reproduce the issue or observation.
+          required: false
